@@ -52,7 +52,16 @@ export default function Landing() {
           </div>
 
           {/* Token issue plate. Both fields flip to live by passing `value`. */}
-          <IssuePlate fields={[{ label: 'CA' }, { label: 'Buy' }]} />
+          <IssuePlate
+            fields={[
+              { label: 'CA', value: '0x1eE40dCCA837e836De4710D6e4D1E21d8896A471' },
+              {
+                label: 'Buy',
+                value: 'Flaunch',
+                href: 'https://flaunch.gg/robinhood/coins/0x1eE40dCCA837e836De4710D6e4D1E21d8896A471',
+              },
+            ]}
+          />
         </div>
 
         <div className="instrumentRail" role="list" aria-label="Live foundry instruments">
