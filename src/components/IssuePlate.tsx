@@ -16,15 +16,8 @@ export type PlateField = {
   label: string
   /** Present once it exists. Absent renders the pending state. */
   value?: string
-  /** Shown instead of `value`; the full value is still what gets copied. */
-  display?: string
   /** Renders the value as a link instead of a copy target. */
   href?: string
-}
-
-/** Middle truncation — people verify a contract address by its tail. */
-export function truncateMiddle(v: string, head = 10, tail = 8): string {
-  return v.length <= head + tail + 1 ? v : `${v.slice(0, head)}…${v.slice(-tail)}`
 }
 
 function CopyRow({ field }: { field: PlateField }) {
@@ -47,7 +40,7 @@ function CopyRow({ field }: { field: PlateField }) {
       <div className="issuePlate__row">
         <span className="issuePlate__label">{field.label}</span>
         <a className="issuePlate__value" href={field.href} target="_blank" rel="noopener noreferrer">
-          <span className="issuePlate__valueText">{field.display ?? field.value}</span>
+          {field.value}
           <span aria-hidden="true">↗</span>
         </a>
       </div>
@@ -66,10 +59,7 @@ function CopyRow({ field }: { field: PlateField }) {
         }}
         aria-label={`Copy ${field.label} ${field.value}`}
       >
-        <span className="issuePlate__valueText issuePlate__valueText--full">{field.value}</span>
-        <span className="issuePlate__valueText issuePlate__valueText--short">
-          {field.display ?? truncateMiddle(field.value)}
-        </span>
+        <span className="issuePlate__valueText">{field.value}</span>
         <span aria-hidden="true">{copied ? '✓' : '⧉'}</span>
       </button>
       <span aria-live="polite" className="visually-hidden">

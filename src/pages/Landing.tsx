@@ -52,12 +52,7 @@ export default function Landing() {
           </div>
 
           {/* Token issue plate. Both fields flip to live by passing `value`. */}
-          <IssuePlate
-            fields={[
-              { label: 'CA', value: '0xc97Aab39AbF22cE1d287503f971a5b0edA77DDb0' },
-              { label: 'Buy', value: 'Virtuals', href: 'https://app.virtuals.io/virtuals/121080' },
-            ]}
-          />
+          <IssuePlate fields={[{ label: 'CA' }, { label: 'Buy' }]} />
         </div>
 
         <div className="instrumentRail" role="list" aria-label="Live foundry instruments">
