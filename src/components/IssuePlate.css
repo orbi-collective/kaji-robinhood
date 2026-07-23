@@ -122,6 +122,21 @@
   text-underline-offset: 3px;
 }
 
+/* Full address while it fits; middle-truncated below. */
+.issuePlate__valueText--short {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .issuePlate__valueText--full {
+    display: none;
+  }
+
+  .issuePlate__valueText--short {
+    display: inline;
+  }
+}
+
 @media (max-width: 560px) {
   .issuePlate {
     display: grid;
