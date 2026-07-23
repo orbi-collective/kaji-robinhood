@@ -1,0 +1,109 @@
+.walletBtnWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.walletBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  padding: 12px 22px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  transition:
+    background 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  min-height: 44px;
+}
+
+.walletBtn--connect {
+  border-color: rgba(207, 255, 0, 0.55);
+  color: var(--signal-lime);
+}
+
+.walletBtn--connect:hover:not(:disabled) {
+  background: rgba(207, 255, 0, 0.1);
+}
+
+.walletBtn--connect:disabled {
+  color: var(--steel);
+  border-color: var(--steel-border);
+  cursor: not-allowed;
+}
+
+.walletBtn--warn {
+  border-color: rgba(211, 138, 40, 0.6);
+  color: var(--warning-amber);
+}
+
+.walletBtn--warn:hover {
+  background: rgba(211, 138, 40, 0.12);
+}
+
+.walletBtn__error {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--warning-amber);
+  max-width: 220px;
+  text-align: right;
+}
+
+.walletChipGroup {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.walletChip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  border: 1px solid var(--steel-border);
+  padding: 7px 14px;
+  background: var(--panel-black);
+  color: var(--steel-light);
+  transition: border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  min-height: 44px;
+  justify-content: center;
+}
+
+.walletChip:hover {
+  border-color: var(--steel);
+}
+
+.walletChip__label {
+  font-size: 8.5px;
+}
+
+.walletChip__addr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--chalk);
+}
+
+.walletDisconnect {
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+  color: var(--steel-light);
+  padding: 0 12px;
+  font-size: 14px;
+  transition:
+    color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  min-width: 44px;
+}
+
+.walletDisconnect:hover {
+  color: var(--fault-red);
+  border-color: rgba(255, 75, 67, 0.5);
+}

@@ -1,0 +1,228 @@
+/* One nav for the whole product. The landing variant only changes surface and
+   the right-hand action; structure, labels and states are shared. */
+
+.topNav {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+  min-height: 72px;
+  padding: 8px 40px;
+  position: relative;
+  z-index: 20;
+}
+
+.topNav--app {
+  background: rgba(3, 4, 3, 0.92);
+  border-bottom: 1px solid var(--steel-border);
+}
+
+/* Sits over the hero plate, so it carries its own scrim rather than a fill. */
+.topNav--landing {
+  background: linear-gradient(180deg, rgba(3, 4, 3, 0.92) 0%, rgba(3, 4, 3, 0.72) 70%, rgba(3, 4, 3, 0) 100%);
+}
+
+.topNav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--chalk);
+}
+
+.topNav__brandMark {
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
+  flex: none;
+}
+
+.topNav__brandName {
+  font-size: 27px;
+  letter-spacing: 0.12em;
+}
+
+.topNav__brandSuffix {
+  margin-left: -4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--steel-light);
+  align-self: center;
+}
+
+/* ---------- links ---------- */
+
+.topNav__links {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.topNav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 11px 18px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--steel-light);
+  border-bottom: 2px solid transparent;
+  transition:
+    color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.topNav__link:hover {
+  color: var(--chalk);
+}
+
+.topNav__link--active {
+  color: var(--signal-lime);
+  font-weight: 700;
+  border-bottom-color: var(--signal-lime);
+}
+
+/* ---------- right slot ---------- */
+
+.topNav__right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  justify-self: end;
+}
+
+.topNav__chain {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.topNav__chainLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--steel-light);
+}
+
+.topNav__chainName {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--signal-lime);
+}
+
+.topNav__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 13px 30px;
+  background: var(--signal-lime);
+  color: var(--foundry-black);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  border-radius: 2px;
+  transition: filter 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.topNav__cta:hover {
+  filter: brightness(1.08);
+}
+
+/* Social sits with the right-hand actions at the same tap size as everything
+   else in the bar. */
+.topNav__social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--steel-light);
+  transition: color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.topNav__social:hover {
+  color: var(--chalk);
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 1080px) {
+  .topNav {
+    grid-template-columns: auto auto;
+    row-gap: 10px;
+    padding: 8px 20px;
+  }
+
+  .topNav__right {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .topNav__links {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    overflow-x: auto;
+    gap: 2px;
+    scrollbar-width: none;
+  }
+
+  .topNav__links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .topNav__link {
+    padding: 11px 14px;
+    white-space: nowrap;
+  }
+
+  .topNav__chain {
+    display: none;
+  }
+
+  .topNav__right {
+    gap: 10px;
+  }
+
+  /* Keep the entry CTA on one line — a wrapped button reads as a broken
+     control, and it must not out-weigh the brand on a small screen. */
+  .topNav__cta {
+    padding: 12px 18px;
+    font-size: 12px;
+    gap: 8px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 560px) {
+  .topNav__brand {
+    gap: 7px;
+  }
+
+  .topNav__brandMark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .topNav__brandName {
+    font-size: 24px;
+  }
+
+  .topNav__brandSuffix {
+    display: none;
+  }
+}

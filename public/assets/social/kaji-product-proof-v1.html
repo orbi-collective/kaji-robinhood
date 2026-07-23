@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kaji Protocol — Simulated Recipe</title>
+  <style>
+    :root {
+      --black: #050605;
+      --panel: #090b09;
+      --white: #f1f3ed;
+      --muted: #81877f;
+      --line: #2b302b;
+      --lime: #cfff00;
+      --fault: #ff5c2b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 1600px;
+      height: 900px;
+      margin: 0;
+      overflow: hidden;
+      background: var(--black);
+      color: var(--white);
+    }
+
+    body {
+      font-family: Menlo, Monaco, monospace;
+      background:
+        linear-gradient(rgba(255,255,255,.016) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.012) 1px, transparent 1px),
+        radial-gradient(circle at 15% 0%, rgba(207,255,0,.035), transparent 32%),
+        #050605;
+      background-size: 100% 72px, 72px 100%, 100% 100%, auto;
+    }
+
+    .frame {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 54px 64px 48px;
+      border: 1px solid #191d19;
+    }
+
+    .frame::before,
+    .frame::after {
+      content: "";
+      position: absolute;
+      inset: 22px;
+      pointer-events: none;
+      border: 1px solid #151915;
+      clip-path: polygon(0 22px,22px 0,calc(100% - 22px) 0,100% 22px,100% calc(100% - 22px),calc(100% - 22px) 100%,22px 100%,0 calc(100% - 22px));
+    }
+
+    .frame::after {
+      inset: 30px;
+      border-color: #0d100d;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 66px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .brand img {
+      width: 54px;
+      height: 54px;
+      object-fit: cover;
+    }
+
+    .brand-name {
+      font-family: Impact, "Arial Narrow", sans-serif;
+      font-size: 31px;
+      letter-spacing: .11em;
+      line-height: 1;
+    }
+
+    .brand-sub {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: .24em;
+    }
+
+    .sim-chip {
+      border: 1px solid #465046;
+      padding: 11px 15px 10px;
+      color: var(--white);
+      font-size: 11px;
+      letter-spacing: .22em;
+    }
+
+    .sim-chip b { color: var(--lime); font-weight: normal; }
+
+    main {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 38px;
+      height: 654px;
+      padding-top: 34px;
+    }
+
+    .route-panel,
+    .inspection-panel {
+      position: relative;
+      border: 1px solid var(--line);
+      background: rgba(8,10,8,.82);
+      overflow: hidden;
+    }
+
+    .route-panel { padding: 31px 34px; }
+    .inspection-panel { padding: 31px 34px 27px; }
+
+    .corner {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-color: #697169;
+    }
+    .tl { top: 10px; left: 10px; border-top: 1px solid; border-left: 1px solid; }
+    .tr { top: 10px; right: 10px; border-top: 1px solid; border-right: 1px solid; }
+    .bl { bottom: 10px; left: 10px; border-bottom: 1px solid; border-left: 1px solid; }
+    .br { bottom: 10px; right: 10px; border-bottom: 1px solid; border-right: 1px solid; }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+    }
+
+    .headline {
+      margin-top: 14px;
+      font-family: Impact, "Arial Narrow", sans-serif;
+      font-size: 59px;
+      line-height: .94;
+      letter-spacing: .025em;
+      text-transform: uppercase;
+    }
+
+    .headline em { color: var(--lime); font-style: normal; }
+
+    .route {
+      position: relative;
+      margin-top: 70px;
+      height: 168px;
+    }
+
+    .route-line {
+      position: absolute;
+      top: 62px;
+      left: 18px;
+      right: 18px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--white) 0 67%, var(--fault) 67% 69%, #303530 69% 100%);
+    }
+
+    .node {
+      position: absolute;
+      top: 48px;
+      width: 29px;
+      height: 29px;
+      transform: rotate(45deg);
+      border: 1px solid var(--white);
+      background: var(--panel);
+    }
+
+    .node::after {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      background: var(--white);
+    }
+
+    .n1 { left: 5%; }
+    .n2 { left: 30%; }
+    .n3 { left: 57%; border-color: var(--lime); }
+    .n3::after { background: var(--lime); }
+    .n4 { left: 82%; border-color: #343a34; }
+    .n4::after { background: #343a34; }
+
+    .route-label {
+      position: absolute;
+      top: 90px;
+      transform: translateX(-42%);
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: .16em;
+      white-space: nowrap;
+    }
+
+    .l1 { left: 7%; }
+    .l2 { left: 32%; }
+    .l3 { left: 59%; color: var(--lime); }
+    .l4 { left: 84%; color: #4f554f; }
+
+    .route-copy {
+      position: absolute;
+      bottom: 29px;
+      left: 34px;
+      right: 34px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: end;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+    }
+
+    .path {
+      font-size: 12px;
+      line-height: 1.8;
+      letter-spacing: .11em;
+    }
+
+    .path span { color: var(--muted); }
+
+    .proposal {
+      text-align: right;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.8;
+      letter-spacing: .18em;
+    }
+
+    .inspection-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .inspection-title strong {
+      font-family: Impact, "Arial Narrow", sans-serif;
+      font-size: 27px;
+      letter-spacing: .08em;
+      font-weight: normal;
+    }
+
+    .live-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--lime);
+      font-size: 9px;
+      letter-spacing: .18em;
+    }
+    .live-dot::before { content: ""; width: 7px; height: 7px; background: var(--lime); }
+
+    .metric {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 22px;
+      min-height: 62px;
+      border-bottom: 1px solid #1b201b;
+    }
+
+    .metric-name {
+      color: #a4aaa3;
+      font-size: 11px;
+      letter-spacing: .14em;
+    }
+
+    .metric-limit {
+      color: #666d66;
+      font-size: 9px;
+      letter-spacing: .1em;
+    }
+
+    .metric-value {
+      min-width: 92px;
+      text-align: right;
+      font-family: Impact, "Arial Narrow", sans-serif;
+      font-size: 28px;
+      letter-spacing: .04em;
+    }
+
+    .metric.fault .metric-value,
+    .metric.fault .metric-name { color: var(--fault); }
+
+    .result {
+      margin-top: 27px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--fault);
+      padding: 20px 22px 18px;
+      background: rgba(255,92,43,.035);
+    }
+
+    .result small {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 9px;
+      letter-spacing: .2em;
+    }
+
+    .result strong {
+      color: var(--fault);
+      font-family: Impact, "Arial Narrow", sans-serif;
+      font-size: 37px;
+      letter-spacing: .08em;
+      font-weight: normal;
+    }
+
+    .stop-mark {
+      width: 41px;
+      height: 41px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--fault);
+      color: var(--fault);
+      font-size: 25px;
+    }
+
+    footer {
+      height: 78px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: .17em;
+    }
+
+    footer strong {
+      color: var(--white);
+      font-weight: normal;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <header>
+      <div class="brand">
+        <img src="../kaji-protocol-mark.png" alt="" />
+        <div>
+          <div class="brand-name">KAJI PROTOCOL</div>
+          <div class="brand-sub">RECIPE INSPECTION / PRODUCT PREVIEW</div>
+        </div>
+      </div>
+      <div class="sim-chip"><b>●</b>&nbsp; SIMULATED RECIPE</div>
+    </header>
+
+    <main>
+      <section class="route-panel">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="eyebrow">AGENT PROPOSAL / ROUTE 04</div>
+        <div class="headline">THE YIELD LOOKS GOOD.<br /><em>THE RECIPE DOESN'T.</em></div>
+
+        <div class="route">
+          <div class="route-line"></div>
+          <div class="node n1"></div><div class="node n2"></div><div class="node n3"></div><div class="node n4"></div>
+          <div class="route-label l1">SCAN</div>
+          <div class="route-label l2">SIMULATE</div>
+          <div class="route-label l3">POLICY CHECK</div>
+          <div class="route-label l4">WALLET SIGN</div>
+        </div>
+
+        <div class="route-copy">
+          <div class="path"><span>ROUTE</span><br />USDC → MORPHO → TOKENIZED TREASURY</div>
+          <div class="proposal">REFERENCE DATA<br />NO LIVE CAPITAL</div>
+        </div>
+      </section>
+
+      <section class="inspection-panel">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="inspection-title">
+          <strong>MANDATE INSPECTION</strong>
+          <span class="live-dot">COMPLETE</span>
+        </div>
+
+        <div class="metric">
+          <div class="metric-name">QUOTED YIELD</div><div class="metric-limit">REFERENCE</div><div class="metric-value">8.4%</div>
+        </div>
+        <div class="metric fault">
+          <div class="metric-name">SLIPPAGE</div><div class="metric-limit">MAX 0.50%</div><div class="metric-value">0.70%</div>
+        </div>
+        <div class="metric">
+          <div class="metric-name">EXECUTION COST</div><div class="metric-limit">ESTIMATED</div><div class="metric-value">0.9%</div>
+        </div>
+        <div class="metric fault">
+          <div class="metric-name">ORACLE AGE</div><div class="metric-limit">MAX 15m</div><div class="metric-value">31m</div>
+        </div>
+        <div class="metric">
+          <div class="metric-name">NET CARRY</div><div class="metric-limit">AFTER COSTS</div><div class="metric-value">6.1%</div>
+        </div>
+
+        <div class="result">
+          <div><small>POLICY RESULT</small><strong>REJECTED</strong></div>
+          <div class="stop-mark">×</div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <strong>THE AGENT CAN PROPOSE. IT CANNOT BYPASS THE MANDATE.</strong>
+      <span>ROBINHOOD CHAIN / 4663</span>
+    </footer>
+  </div>
+</body>
+</html>

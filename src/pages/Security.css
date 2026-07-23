@@ -1,0 +1,546 @@
+/* Security — no media plate. This page argues a control boundary, so every
+   pixel carries state or evidence; nothing here is atmosphere. */
+
+.securityPage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 34px 44px 0;
+  max-width: 1560px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ---------- header ---------- */
+
+.securityHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 44px;
+  align-items: start;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--steel-border);
+}
+
+.securityHead__h1 {
+  font-size: clamp(40px, 4.4vw, 66px);
+  text-transform: uppercase;
+  text-wrap: balance;
+  max-width: 15ch;
+}
+
+.securityHead__sub {
+  color: var(--steel-light);
+  font-size: 16px;
+  line-height: 1.6;
+  max-width: 62ch;
+  margin: 22px 0 0;
+  text-wrap: pretty;
+}
+
+/* Status block: the one place the whole engine verdict is stated. */
+.engineStatus {
+  border: 1px solid var(--steel);
+  background: var(--panel-black);
+  padding: 18px 20px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 3px solid var(--signal-lime);
+}
+
+.engineStatus--review {
+  border-top-color: var(--warning-amber);
+}
+
+.engineStatus--block {
+  border-top-color: var(--fault-red);
+}
+
+.engineStatus__label {
+  color: var(--steel-light);
+}
+
+.engineStatus__verdict {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--signal-lime);
+  margin-bottom: 12px;
+}
+
+.engineStatus--review .engineStatus__verdict {
+  color: var(--warning-amber);
+}
+
+.engineStatus--block .engineStatus__verdict {
+  color: var(--fault-red);
+}
+
+.engineStatus__meta {
+  margin: 0;
+  border-top: 1px solid var(--steel-border);
+}
+
+.engineStatus__meta > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(38, 42, 37, 0.6);
+}
+
+.engineStatus__meta > div:last-child {
+  border-bottom: none;
+}
+
+.engineStatus__meta dt {
+  font-size: 12.5px;
+  color: var(--steel-light);
+}
+
+.engineStatus__meta dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--chalk);
+}
+
+/* ---------- shared section header ---------- */
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.sectionHead__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 30px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.sectionHead__meta {
+  color: var(--steel-light);
+  white-space: nowrap;
+}
+
+/* ---------- guardrails ---------- */
+
+.guardrails__table {
+  border: 1px solid var(--steel);
+  background: var(--panel-black);
+}
+
+.guardrails__head,
+.guardrails__row {
+  display: grid;
+  grid-template-columns: 220px 116px minmax(0, 1fr) 190px;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 20px;
+}
+
+.guardrails__head {
+  border-bottom: 1px solid var(--steel);
+}
+
+.guardrails__head .mono-label {
+  font-size: 9.5px;
+}
+
+.guardrails__row {
+  border-bottom: 1px solid rgba(38, 42, 37, 0.65);
+  border-left: 3px solid transparent;
+  padding-left: 17px;
+}
+
+.guardrails__row:last-child {
+  border-bottom: none;
+}
+
+.guardrails__row--review {
+  background: rgba(211, 138, 40, 0.1);
+  border-left-color: var(--warning-amber);
+}
+
+.guardrails__row--block {
+  background: rgba(255, 75, 67, 0.1);
+  border-left-color: var(--fault-red);
+}
+
+.guardrails__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--chalk);
+}
+
+.guardrails__detail {
+  font-size: 13px;
+  color: var(--steel-light);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.guardrails__bound {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--chalk);
+  text-align: right;
+  word-break: break-word;
+}
+
+/* ---------- split: prohibitions + contracts ---------- */
+
+.securityPage__split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.prohibitions__list,
+.contracts__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+}
+
+.prohibition {
+  display: flex;
+  gap: 14px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(38, 42, 37, 0.65);
+}
+
+.prohibition:last-child {
+  border-bottom: none;
+}
+
+.prohibition__mark {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(255, 75, 67, 0.55);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fault-red);
+  margin-top: 1px;
+}
+
+.prohibition__body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.prohibition__body strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--chalk);
+}
+
+.prohibition__body span {
+  font-size: 12.5px;
+  color: var(--steel-light);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* ---------- contracts ---------- */
+
+.contracts__warning {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--warning-amber);
+  border-left: 2px solid rgba(211, 138, 40, 0.5);
+  padding-left: 12px;
+  max-width: 66ch;
+  text-wrap: pretty;
+}
+
+.contracts__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 18px;
+  border-bottom: 1px solid rgba(38, 42, 37, 0.65);
+}
+
+.contracts__row:last-child {
+  border-bottom: none;
+}
+
+.contracts__label {
+  font-size: 13.5px;
+  color: var(--chalk);
+  flex: none;
+  padding: 15px 0;
+}
+
+.contracts__addr {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--signal-lime);
+  min-width: 0;
+  /* Padding rather than height so the tap target reaches 44px without
+     changing the row rhythm. */
+  padding: 15px 0;
+}
+
+.contracts__addrText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contracts__addr:hover .contracts__addrText {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.contracts__foot {
+  margin: 12px 0 0;
+  color: var(--steel-light);
+}
+
+.contracts__foot a {
+  display: inline-block;
+  padding: 15px 0;
+  color: var(--signal-lime);
+}
+
+.contracts__foot a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- kill switch ---------- */
+
+.killSwitch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 22px 24px;
+  border: 1px solid rgba(255, 75, 67, 0.4);
+  background: rgba(24, 8, 7, 0.75);
+}
+
+.killSwitch--engaged {
+  border-color: var(--steel-border);
+  background: var(--panel-black);
+}
+
+.killSwitch__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.killSwitch__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 26px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0;
+  color: var(--fault-red);
+}
+
+.killSwitch--engaged .killSwitch__title {
+  color: var(--steel-light);
+}
+
+.killSwitch__copy p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--steel-light);
+  line-height: 1.5;
+  max-width: 68ch;
+  text-wrap: pretty;
+}
+
+.killSwitch__btn {
+  flex: none;
+  border: 1px solid var(--fault-red);
+  color: var(--fault-red);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  padding: 17px 28px;
+  border-radius: 2px;
+  min-height: 44px;
+  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.killSwitch__btn:hover:not(:disabled) {
+  background: rgba(255, 75, 67, 0.16);
+}
+
+.killSwitch__btn:disabled {
+  border-color: var(--steel-border);
+  color: var(--steel);
+  cursor: not-allowed;
+}
+
+/* ---------- stop dialog ---------- */
+
+.stopDialog {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.stopDialog__body {
+  padding: 26px 26px 20px;
+}
+
+.stopDialog__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 32px;
+  text-transform: uppercase;
+  color: var(--fault-red);
+  margin: 0 0 14px;
+}
+
+.stopDialog__text {
+  margin: 0;
+  color: var(--steel-light);
+  line-height: 1.6;
+  font-size: 14px;
+  text-wrap: pretty;
+}
+
+.stopDialog__note {
+  margin: 14px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--warning-amber);
+}
+
+.stopDialog__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 26px;
+  border-top: 1px solid var(--steel-border);
+}
+
+.stopDialog__confirm {
+  background: var(--fault-red);
+  color: #140402;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  padding: 16px 26px;
+  border-radius: 2px;
+  min-height: 44px;
+  transition: filter 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stopDialog__confirm:hover {
+  filter: brightness(1.12);
+}
+
+/* ---------- disclosure ---------- */
+
+.securityPage__disclosure {
+  margin: 0;
+  padding: 16px 0 28px;
+  border-top: 1px solid var(--steel-border);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: var(--steel-light);
+  max-width: 96ch;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 760px) {
+  .sectionHead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .sectionHead__title {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .securityPage {
+    padding: 28px 20px 0;
+    gap: 24px;
+  }
+
+  .securityHead {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .securityPage__split {
+    grid-template-columns: 1fr;
+  }
+
+  .guardrails__head {
+    display: none;
+  }
+
+  .guardrails__row {
+    grid-template-columns: 1fr auto;
+    row-gap: 8px;
+    padding: 16px 16px 16px 13px;
+  }
+
+  .guardrails__detail {
+    grid-column: 1 / -1;
+  }
+
+  .guardrails__bound {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+
+  .killSwitch {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .killSwitch__btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .contracts__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .contracts__addr {
+    max-width: 100%;
+  }
+}

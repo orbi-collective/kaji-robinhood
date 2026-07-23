@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+.DS_Store
+
+# Local env — never commit real endpoints or keys. .env.example is the template.
+.env
+.env.*
+!.env.example
+
+*.local
+*.log
+npm-debug.log*
+.vite

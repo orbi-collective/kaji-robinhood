@@ -1,0 +1,332 @@
+.mandatePage__plate {
+  z-index: -3;
+}
+
+.mandatePage__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: linear-gradient(
+    90deg,
+    rgba(6, 7, 6, 0.98) 0%,
+    rgba(6, 7, 6, 0.93) 44%,
+    rgba(6, 7, 6, 0.3) 64%,
+    rgba(6, 7, 6, 0.06) 100%
+  );
+  pointer-events: none;
+}
+
+/* ---------- machine overlays ---------- */
+
+.controlPlaque {
+  position: absolute;
+  left: 64%;
+  top: 16%;
+  width: 13%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.controlPlaque__id {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(24px, 3vw, 48px);
+  color: #b9bdb6;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.controlPlaque__sub {
+  font-family: var(--font-mono);
+  font-size: clamp(7px, 0.75vw, 12px);
+  letter-spacing: 0.3em;
+  color: #9d9f99;
+}
+
+.controlPlaque__meta {
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: clamp(6px, 0.52vw, 9px);
+  letter-spacing: 0.16em;
+  color: #7b7e78;
+  line-height: 1.8;
+}
+
+.systemStatus {
+  position: absolute;
+  right: 4%;
+  top: 14%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.systemStatus__value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(22px, 2.4vw, 38px);
+  color: var(--signal-lime);
+  letter-spacing: 0.06em;
+}
+
+.systemStatus__value--warn {
+  color: var(--warning-amber);
+}
+
+.allowlistPanel {
+  position: absolute;
+  left: 61%;
+  top: 41%;
+  width: 19%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1;
+}
+
+.allowlistPanel__title {
+  font-size: clamp(7px, 0.65vw, 11px);
+}
+
+.allowlistPanel__select {
+  border: 1px solid rgba(174, 178, 170, 0.45);
+  background: rgba(10, 12, 10, 0.88);
+  color: var(--chalk);
+  font-family: var(--font-body);
+  font-size: clamp(10px, 0.85vw, 14px);
+  padding: 10px 14px;
+}
+
+.allowlistPanel__ok {
+  border: 1px solid rgba(174, 178, 170, 0.3);
+  background: rgba(10, 12, 10, 0.8);
+  padding: 9px 14px;
+  font-family: var(--font-mono);
+  font-size: clamp(7px, 0.62vw, 10px);
+  letter-spacing: 0.12em;
+  color: var(--steel-light);
+  display: flex;
+  justify-content: space-between;
+}
+
+.allowlistPanel__ok--warn {
+  color: var(--warning-amber);
+  border-color: rgba(211, 138, 40, 0.5);
+}
+
+/* ---------- form column ---------- */
+
+.mandatePage__content {
+  padding: 32px 48px 64px;
+  max-width: 54%;
+}
+
+.mandatePage__h1 {
+  font-size: clamp(44px, 5.4vw, 76px);
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.mandatePage__sub {
+  color: var(--steel-light);
+  margin: 20px 0 32px;
+  max-width: 58ch;
+  line-height: 1.55;
+  font-size: 15px;
+  text-wrap: pretty;
+}
+
+.limitForm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.limitRow {
+  display: grid;
+  grid-template-columns: 54px 200px 1fr;
+  align-items: stretch;
+  border: 1px solid var(--steel-border);
+  background: rgba(10, 12, 10, 0.9);
+  min-height: 56px;
+  margin-top: 8px;
+}
+
+.limitRow:focus-within {
+  border-color: var(--steel);
+}
+
+.limitRow__index {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 21px;
+  color: var(--signal-lime);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.limitRow__label {
+  font-size: 11.5px;
+  color: var(--chalk);
+  display: flex;
+  align-items: center;
+}
+
+.limitRow__field {
+  display: flex;
+  align-items: stretch;
+  border-left: 1px solid var(--steel-border);
+}
+
+.limitRow__field input,
+.limitRow__field select {
+  flex: 1;
+  background: rgba(17, 20, 17, 0.7);
+  border: none;
+  color: var(--chalk);
+  font-family: var(--font-body);
+  font-size: 15px;
+  padding: 0 18px;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  outline-offset: -2px;
+}
+
+.limitRow__field input[aria-invalid='true'] {
+  color: var(--fault-red);
+  background: rgba(255, 75, 67, 0.08);
+}
+
+.limitRow__field select {
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--steel-light) 50%),
+    linear-gradient(135deg, var(--steel-light) 50%, transparent 50%);
+  background-position:
+    calc(100% - 22px) 50%,
+    calc(100% - 16px) 50%;
+  background-size:
+    6px 6px,
+    6px 6px;
+  background-repeat: no-repeat;
+}
+
+.limitRow__field option {
+  background: var(--machine-black);
+}
+
+.limitRow__unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-left: 1px solid var(--steel-border);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--steel-light);
+  background: rgba(17, 20, 17, 0.85);
+  flex: none;
+}
+
+select.limitRow__unit {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 30px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--steel-light) 50%),
+    linear-gradient(135deg, var(--steel-light) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 50%,
+    calc(100% - 11px) 50%;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+}
+
+.limitRow__unit--static {
+  pointer-events: none;
+}
+
+.fieldNote {
+  margin: 0 0 2px;
+  padding-left: 54px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--steel-light);
+  max-width: 70ch;
+}
+
+.fieldNote--error {
+  color: var(--fault-red);
+}
+
+.mandatePage__formError {
+  margin: 16px 0 0;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 75, 67, 0.5);
+  background: rgba(255, 75, 67, 0.1);
+  color: var(--fault-red);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.mandatePage__actions {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.mandatePage__simulate {
+  font-family: var(--font-display);
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 1100px) {
+  .mandatePage__content {
+    max-width: 100%;
+    padding: 28px 20px 56px;
+  }
+
+  .controlPlaque,
+  .systemStatus,
+  .allowlistPanel {
+    display: none;
+  }
+
+  .limitRow {
+    grid-template-columns: 44px 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .limitRow__label {
+    padding: 12px 0 4px;
+  }
+
+  .limitRow__field {
+    grid-column: 1 / -1;
+    border-left: none;
+    border-top: 1px solid var(--steel-border);
+    min-height: 52px;
+  }
+
+  .fieldNote {
+    padding-left: 0;
+  }
+
+  .mandatePage__actions {
+    grid-template-columns: 1fr;
+  }
+}

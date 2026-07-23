@@ -1,0 +1,483 @@
+/* ================= Fold 1 — full-video foundry hero ================= */
+
+.foundryHero {
+  position: relative;
+  min-height: 100svh;
+  overflow: clip;
+  isolation: isolate;
+  background: var(--foundry-black);
+  display: flex;
+  flex-direction: column;
+}
+
+.foundryHero__plate,
+.scene-plate {
+  position: absolute;
+  inset: 0;
+  z-index: -3;
+}
+
+.scene-plate__poster,
+.scene-plate__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.foundryHero__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: linear-gradient(
+    90deg,
+    rgba(6, 7, 6, 0.98) 0%,
+    rgba(6, 7, 6, 0.82) 31%,
+    rgba(6, 7, 6, 0.18) 55%,
+    rgba(6, 7, 6, 0.05) 100%
+  );
+  pointer-events: none;
+}
+
+/* ---------- hero copy ---------- */
+
+.foundryHero__copy {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 48px 48px 24px;
+  max-width: 46%;
+}
+
+.foundryHero__h1 {
+  font-size: clamp(56px, 7.4vw, 96px);
+}
+
+.foundryHero__body {
+  font-size: 18px;
+  color: var(--steel-light);
+  margin: 28px 0 36px;
+}
+
+.foundryHero__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.foundryHero__cta {
+  min-width: 300px;
+}
+
+.foundryHero__cta2 {
+  min-width: 200px;
+}
+
+/* ---------- instrument rail ---------- */
+
+.instrumentRail {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid rgba(174, 178, 170, 0.18);
+  background: rgba(3, 4, 3, 0.82);
+  backdrop-filter: blur(2px);
+}
+
+.instrumentRail__cell {
+  padding: 22px 32px 26px;
+  border-right: 1px solid rgba(174, 178, 170, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.instrumentRail__cell:last-child {
+  border-right: none;
+}
+
+.instrumentRail__row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.instrumentRail__value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 58px;
+  line-height: 0.9;
+  color: var(--chalk);
+}
+
+.instrumentRail__value--source {
+  font-size: 40px;
+  color: var(--steel-light);
+}
+
+.instrumentRail__sub {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--steel-light);
+}
+
+.instrumentRail__pulse {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--signal-lime);
+  box-shadow: 0 0 12px rgba(207, 255, 0, 0.8);
+  animation: pulse 2s ease-in-out infinite;
+  margin-bottom: 6px;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ================= shared fold layout ================= */
+
+.fold {
+  padding: 120px 48px;
+  border-top: 1px solid var(--steel-border);
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.fold__h2 {
+  font-size: clamp(40px, 4.6vw, 64px);
+  margin-bottom: 48px;
+}
+
+.fold__h2--big {
+  font-size: clamp(48px, 6vw, 84px);
+  max-width: 900px;
+}
+
+.fold__intro {
+  color: var(--steel-light);
+  max-width: 560px;
+  margin: -24px 0 40px;
+}
+
+.fold__disclosure {
+  margin-top: 24px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--steel);
+}
+
+/* ---------- fold 2: ledger ---------- */
+
+.ledger {
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+}
+
+.ledger__row {
+  display: grid;
+  grid-template-columns: 2fr repeat(6, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--steel-border);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.ledger__row:last-child {
+  border-bottom: none;
+}
+
+.ledger__row--head {
+  background: rgba(17, 20, 17, 0.8);
+  padding: 14px 24px;
+}
+
+.ledger__venue {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.ledger__cost {
+  color: var(--steel-light);
+}
+
+.ledger__net {
+  color: var(--signal-lime);
+  font-weight: 600;
+}
+
+/* ---------- fold 3: assembly line ---------- */
+
+.assemblyLine {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+}
+
+.assemblyLine__station {
+  padding: 32px 24px 40px;
+  border-right: 1px solid var(--steel-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.assemblyLine__station:last-child {
+  border-right: none;
+}
+
+.assemblyLine__index {
+  color: var(--signal-lime);
+}
+
+.assemblyLine__name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 32px;
+  letter-spacing: 0.02em;
+}
+
+.assemblyLine__desc {
+  font-size: 10px;
+  color: var(--steel);
+}
+
+.assemblyLine__belt {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, var(--signal-lime) 0 24px, transparent 24px 48px);
+  opacity: 0.5;
+}
+
+/* ---------- fold 4: recipe sheets ---------- */
+
+.recipeSheets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.recipeSheet {
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.recipeSheet__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--steel-border);
+  padding-bottom: 16px;
+}
+
+.recipeSheet__name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 30px;
+  margin: 0;
+}
+
+.recipeSheet__carry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recipeSheet__carryValue {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 52px;
+  color: var(--signal-lime);
+  line-height: 0.9;
+}
+
+.recipeSheet__specs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 0;
+}
+
+.recipeSheet__specs dd {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.recipeSheet__mix {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recipeSheet__ingredient {
+  display: grid;
+  grid-template-columns: 110px 1fr 44px;
+  align-items: center;
+  gap: 10px;
+}
+
+.recipeSheet__bar {
+  height: 6px;
+  background: var(--machine-black);
+  border: 1px solid var(--steel-border);
+}
+
+.recipeSheet__barFill {
+  height: 100%;
+  background: var(--signal-lime);
+}
+
+.recipeSheet__pct {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: right;
+  color: var(--steel-light);
+}
+
+.recipeSheet__cta {
+  margin-top: auto;
+}
+
+/* ---------- fold 5: stress grid ---------- */
+
+.stressGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+  margin-bottom: 40px;
+}
+
+.stressGrid__cell {
+  padding: 28px 20px;
+  border-right: 1px solid var(--steel-border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stressGrid__cell:last-child {
+  border-right: none;
+}
+
+.stressGrid__name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.stressGrid__resp {
+  color: var(--warning-amber);
+}
+
+.stressGrid__resp--red {
+  color: var(--fault-red);
+}
+
+/* ---------- fold 6: dev panel ---------- */
+
+.devPanel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.devPanel__code {
+  margin: 0;
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+  padding: 28px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--steel-light);
+  overflow-x: auto;
+}
+
+.devPanel__code--response {
+  color: var(--signal-lime);
+}
+
+/* ---------- final fold ---------- */
+
+.fold--final {
+  text-align: left;
+  padding-bottom: 160px;
+}
+
+.fold__disclosure--final {
+  max-width: 620px;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 1024px) {
+  .foundryHero__copy {
+    max-width: 100%;
+    justify-content: flex-start;
+    padding-top: 96px;
+  }
+
+  .instrumentRail {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  .instrumentRail__cell {
+    flex: 0 0 62vw;
+    scroll-snap-align: start;
+  }
+
+  .recipeSheets,
+  .devPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .assemblyLine,
+  .stressGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .assemblyLine__station,
+  .stressGrid__cell {
+    border-right: none;
+    border-bottom: 1px solid var(--steel-border);
+  }
+
+  .ledger__row {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    row-gap: 8px;
+  }
+}
+
+/* Issue plate sits under the CTAs with its own breathing room — it is
+   supporting information, not a third call to action. */
+.foundryHero__copy .issuePlate {
+  margin-top: 30px;
+}

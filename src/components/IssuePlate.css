@@ -1,0 +1,135 @@
+/* A machined nameplate, not a contract pill. Matches the riveted serial plate
+   already bolted to KJ-01 in the foundry scenes. */
+
+.issuePlate {
+  position: relative;
+  display: inline-grid;
+  gap: 1px;
+  padding: 13px 22px;
+  background: linear-gradient(180deg, rgba(24, 27, 23, 0.94) 0%, rgba(14, 16, 14, 0.94) 100%);
+  border: 1px solid var(--steel-dim);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(174, 178, 170, 0.14);
+}
+
+/* Four corner rivets — the plate is bolted on, like every other panel. */
+.issuePlate__rivet {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--steel);
+  box-shadow: inset 0 0.5px 0 rgba(240, 241, 235, 0.4);
+}
+
+.issuePlate__rivet--tl {
+  top: 6px;
+  left: 7px;
+}
+
+.issuePlate__rivet--tr {
+  top: 6px;
+  right: 7px;
+}
+
+.issuePlate__rivet--bl {
+  bottom: 6px;
+  left: 7px;
+}
+
+.issuePlate__rivet--br {
+  bottom: 6px;
+  right: 7px;
+}
+
+.issuePlate__row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  min-height: 30px;
+}
+
+.issuePlate__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--steel-light);
+}
+
+/* Pending: steel, never lime. Lime means live in this system. */
+.issuePlate__pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--steel-light);
+}
+
+.issuePlate__pendingDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--steel);
+  box-shadow: 0 0 0 3px rgba(95, 100, 94, 0.18);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .issuePlate__pendingDot {
+    animation: platePending 2.8s ease-in-out infinite;
+  }
+}
+
+@keyframes platePending {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Live: becomes signal, copyable or linkable. */
+.issuePlate__value {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--signal-lime);
+  background: none;
+  border: none;
+  text-align: left;
+}
+
+.issuePlate__valueText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.issuePlate__value:hover .issuePlate__valueText {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+  .issuePlate {
+    display: grid;
+    width: 100%;
+  }
+
+  .issuePlate__row {
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 12px;
+  }
+}
