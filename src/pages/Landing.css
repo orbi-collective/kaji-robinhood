@@ -1,5 +1,9 @@
 /* ================= Fold 1 — full-video foundry hero ================= */
 
+.landing {
+  overflow-x: hidden;
+}
+
 .foundryHero {
   position: relative;
   min-height: 100svh;
@@ -473,6 +477,37 @@
   .ledger__row {
     grid-template-columns: 1fr 1fr 1fr 1fr;
     row-gap: 8px;
+  }
+}
+
+@media (max-width: 560px) {
+  .foundryHero__copy {
+    width: 100%;
+    padding: 76px 24px 24px;
+  }
+
+  .foundryHero__h1 {
+    font-size: clamp(46px, 13vw, 56px);
+  }
+
+  .foundryHero__body {
+    margin: 24px 0 30px;
+    font-size: 16px;
+  }
+
+  .foundryHero__ctas {
+    width: calc(100vw - 48px);
+  }
+
+  .foundryHero__cta,
+  .foundryHero__cta2 {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .foundryHero__copy .issuePlate {
+    width: calc(100vw - 48px);
+    box-sizing: border-box;
   }
 }
 

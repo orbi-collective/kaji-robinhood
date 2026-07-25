@@ -38,7 +38,7 @@ const PROHIBITIONS = [
   { rule: 'Invent calldata', why: 'Every transaction is assembled from a fixed template and simulated before you see it.' },
   { rule: 'Bypass the allowlist', why: 'Interactions outside your approved venues are refused, not flagged.' },
   { rule: 'Raise its own limits', why: 'Spend, leverage and slippage ceilings can only be changed by you, in the mandate.' },
-  { rule: 'Move funds outside the mandate', why: 'Kaji never takes custody. Your wallet is the only signer.' },
+  { rule: 'Move funds outside the mandate', why: 'SAJI never takes custody. Your wallet is the only signer.' },
   { rule: 'Promise a return', why: 'Every figure is an estimate carrying its inputs, timestamp and what breaks it.' },
 ]
 
@@ -177,7 +177,7 @@ export default function Security() {
               If the recipe changes, the machine stops<span className="lime-period">.</span>
             </h1>
             <p className="securityHead__sub">
-              Kaji never takes custody. Every action is simulated and checked against your mandate before it reaches
+              SAJI never takes custody. Every action is simulated and checked against your mandate before it reaches
               your wallet — and you can revoke its access in one click.
             </p>
           </div>
@@ -254,7 +254,7 @@ export default function Security() {
           <section className="prohibitions" aria-labelledby="never-title">
             <div className="sectionHead">
               <h2 id="never-title" className="sectionHead__title">
-                What Kaji can never do
+                What SAJI can never do
               </h2>
               <span className="mono-label sectionHead__meta">NOT A SETTING</span>
             </div>

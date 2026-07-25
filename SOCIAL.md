@@ -1,6 +1,6 @@
-# Kaji Protocol Social System
+# SAJI Social System
 
-This is the source of truth for Kaji Protocol social assets. Product truth remains in `PRODUCT.md`; visual tokens remain in `DESIGN.md` and `src/index.css`.
+This is the source of truth for SAJI social assets. Product truth remains in `PRODUCT.md`; visual tokens remain in `DESIGN.md` and `src/index.css`.
 
 ## Core idea
 
@@ -51,7 +51,7 @@ Coins, chain-link icons, candlestick charts as decoration, floating particles, n
 ## Reusable image prompt
 
 ```text
-Create a Kaji Protocol social asset that feels like an industrial instrument panel operating within spec.
+Create a SAJI social asset that feels like an industrial instrument panel operating within spec.
 
 Format: [X header / 16:9 post / square post]
 Primary statement (verbatim): "[ONE MEASURED CLAIM]"
@@ -69,4 +69,3 @@ No generic crypto imagery, coins, chains, particles, glassmorphism, decorative g
 - Link preview / Open Graph: `1200 × 630`
 - X landscape post: `1600 × 900`
 - Square post: `1080 × 1080`
-

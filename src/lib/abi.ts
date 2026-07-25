@@ -1,4 +1,4 @@
-/** Minimal ABIs — only the functions Kaji actually calls. */
+/** Minimal ABIs — only the functions SAJI actually calls. */
 
 export const erc20Abi = [
   {

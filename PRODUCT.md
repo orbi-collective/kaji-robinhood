@@ -14,7 +14,7 @@ Crypto-native capital allocators holding idle stablecoins on Robinhood Chain —
 
 ## Product Purpose
 
-Kaji turns fragmented onchain inputs into one measured carry strategy. It scans lending, spot and hedge venues, assembles candidate recipes, simulates net carry after every cost, validates each proposed action against a deterministic policy engine, and prepares a transaction the user signs themselves. It never takes custody and never moves funds outside a mandate. Success is a user who understands what they are signing before they sign it, and an agent that pauses itself the moment the recipe leaves its bounds.
+SAJI turns fragmented onchain inputs into one measured carry strategy. It scans lending, spot and hedge venues, assembles candidate recipes, simulates net carry after every cost, validates each proposed action against a deterministic policy engine, and prepares a transaction the user signs themselves. It never takes custody and never moves funds outside a mandate. Success is a user who understands what they are signing before they sign it, and an agent that pauses itself the moment the recipe leaves its bounds.
 
 ## Positioning
 

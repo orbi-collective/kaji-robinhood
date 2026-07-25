@@ -84,7 +84,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, BoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     if (import.meta.env.DEV) {
-      console.error('Kaji render error', error, info)
+      console.error('SAJI render error', error, info)
     }
   }
 

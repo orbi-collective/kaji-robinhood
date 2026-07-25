@@ -103,10 +103,10 @@ export default function Mandate() {
       <div className="mandatePage__scrim" aria-hidden="true" />
 
       <div className="controlPlaque" aria-hidden="true">
-        <span className="controlPlaque__id">KJ-01</span>
+        <span className="controlPlaque__id">SJ-01</span>
         <span className="controlPlaque__sub">CONTROL UNIT</span>
         <span className="controlPlaque__meta">
-          SERIAL: KJ01-8847-A
+          SERIAL: SJ01-8847-A
           <br />
           STATUS: {isValid ? 'WITHIN SPEC' : 'CALIBRATING'}
         </span>
@@ -123,7 +123,7 @@ export default function Mandate() {
           Set the machine limits<span className="lime-period">.</span>
         </h1>
         <p className="mandatePage__sub">
-          These constraints compile into the policy engine. Kaji will not prepare any action that violates them, and it
+          These constraints compile into the policy engine. SAJI will not prepare any action that violates them, and it
           pauses itself when a live position drifts outside.
         </p>
 
@@ -309,7 +309,7 @@ export default function Mandate() {
 
       <div className="allowlistPanel">
         <span className="mono-label mono-label--lime allowlistPanel__title">PROTOCOL ALLOWLIST</span>
-        <div className="allowlistPanel__select">Kaji Standard v1</div>
+        <div className="allowlistPanel__select">SAJI Standard v1</div>
         <div className={`allowlistPanel__ok ${isValid ? '' : 'allowlistPanel__ok--warn'}`}>
           {isValid ? 'ALL SYSTEMS WITHIN SPEC.' : 'LIMITS OUT OF RANGE.'} <span aria-hidden="true">{isValid ? '✓' : '!'}</span>
         </div>

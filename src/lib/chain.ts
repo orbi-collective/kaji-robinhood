@@ -56,7 +56,7 @@ export const MORPHO = {
 } as const
 
 /**
- * ERC-4626 vaults Kaji can read and deposit into. Each is a real, curated
+ * ERC-4626 vaults SAJI can read and deposit into. Each is a real, curated
  * Morpho vault; `asset` is asserted onchain before a deposit is prepared.
  */
 export const VAULTS = [

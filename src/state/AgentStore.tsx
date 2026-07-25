@@ -27,7 +27,8 @@ type Action =
   | { type: 'setPaused'; paused: boolean }
   | { type: 'killSwitch' }
 
-const STORAGE_KEY = 'kaji.agent.v1'
+const STORAGE_KEY = 'saji.agent.v1'
+const LEGACY_STORAGE_KEY = 'kaji.agent.v1'
 
 const initialState: State = {
   mandate: null,
@@ -132,7 +133,7 @@ export function AgentProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
+      const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
       dispatch({ type: 'hydrate', state: raw ? (JSON.parse(raw) as Partial<State>) : {} })
     } catch {
       dispatch({ type: 'hydrate', state: {} })

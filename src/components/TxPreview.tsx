@@ -235,7 +235,7 @@ export default function TxPreview({
             )}
             {blocked && (
               <p className="txPreview__notice txPreview__notice--error" role="alert">
-                The policy engine blocked this action. Adjust the mandate or the allocation — Kaji will not prepare a
+                The policy engine blocked this action. Adjust the mandate or the allocation — SAJI will not prepare a
                 transaction that violates it.
               </p>
             )}

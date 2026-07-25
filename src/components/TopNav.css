@@ -209,6 +209,15 @@
 }
 
 @media (max-width: 560px) {
+  .topNav {
+    column-gap: 0;
+    padding-inline: 16px;
+  }
+
+  .topNav--landing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .topNav__brand {
     gap: 7px;
   }
@@ -224,5 +233,32 @@
 
   .topNav__brandSuffix {
     display: none;
+  }
+
+  .topNav__links {
+    grid-column: 1;
+    width: calc(100vw - 32px);
+    min-width: 0;
+    gap: 0;
+  }
+
+  .topNav__link {
+    flex: 1 1 25%;
+    justify-content: center;
+    padding-inline: 8px;
+    font-size: 10px;
+  }
+
+  .topNav__social {
+    display: none;
+  }
+
+  .topNav--landing .topNav__right {
+    display: none;
+  }
+
+  .topNav__cta {
+    padding-inline: 13px;
+    font-size: 10px;
   }
 }

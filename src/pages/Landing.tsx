@@ -41,7 +41,7 @@ export default function Landing() {
             CLEANEST CARRY.
             <span className="lime-square" aria-hidden="true" />
           </h1>
-          <p className="foundryHero__body">Raw market inputs in. Measured net yield out.</p>
+          <p className="foundryHero__body">Measured carry, served with every input visible.</p>
           <div className="foundryHero__ctas">
             <Link to="/opportunities" className="btn-lime foundryHero__cta">
               OPEN THE FOUNDRY <span aria-hidden="true">→</span>
@@ -52,16 +52,7 @@ export default function Landing() {
           </div>
 
           {/* Token issue plate. Both fields flip to live by passing `value`. */}
-          <IssuePlate
-            fields={[
-              { label: 'CA', value: '0x1eE40dCCA837e836De4710D6e4D1E21d8896A471' },
-              {
-                label: 'Buy',
-                value: 'Flaunch',
-                href: 'https://flaunch.gg/robinhood/coins/0x1eE40dCCA837e836De4710D6e4D1E21d8896A471',
-              },
-            ]}
-          />
+          <IssuePlate fields={[{ label: 'CA' }, { label: 'Buy' }]} />
         </div>
 
         <div className="instrumentRail" role="list" aria-label="Live foundry instruments">
@@ -108,7 +99,7 @@ export default function Landing() {
           <span className="lime-square" aria-hidden="true" />
         </h2>
         <p className="fold__intro">
-          Kaji prices a strategy the way a foundry prices a casting: every raw input, every cost, on one ledger.
+          SAJI prices a strategy the way a foundry prices a casting: every raw input, every cost, on one ledger.
         </p>
         <div className="ledger" role="table" aria-label="Material ledger">
           <div className="ledger__row ledger__row--head" role="row">
@@ -156,7 +147,7 @@ export default function Landing() {
           THE AGENT REASONS. THE POLICY ENGINE DECIDES.
           <span className="lime-square" aria-hidden="true" />
         </h2>
-        <div className="assemblyLine" aria-label="Kaji agent pipeline">
+        <div className="assemblyLine" aria-label="SAJI agent pipeline">
           {['SCAN', 'ASSEMBLE', 'SIMULATE', 'VALIDATE', 'PREPARE'].map((step, i) => (
             <div key={step} className="assemblyLine__station">
               <span className="assemblyLine__index mono-label">{String(i + 1).padStart(2, '0')}</span>

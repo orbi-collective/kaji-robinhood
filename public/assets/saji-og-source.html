@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1200, initial-scale=1" />
+    <title>SAJI Open Graph Card</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1200px;
+        height: 630px;
+        margin: 0;
+        overflow: hidden;
+        background: #060706;
+      }
+
+      body {
+        position: relative;
+        display: grid;
+        place-items: center;
+        color: #f0f1eb;
+        font-family: "Arial Narrow", "Helvetica Neue", sans-serif;
+      }
+
+      body::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px) 0 138px / 100% 336px,
+          radial-gradient(circle at 28% 50%, rgba(207, 255, 0, 0.045), transparent 29%),
+          linear-gradient(110deg, transparent 0 72%, rgba(255, 255, 255, 0.018) 72% 73%, transparent 73%);
+      }
+
+      body::after {
+        content: "";
+        position: absolute;
+        inset: 22px;
+        border: 1px solid rgba(174, 178, 170, 0.12);
+        clip-path: polygon(0 0, 24% 0, 26% 8px, 74% 8px, 76% 0, 100% 0, 100% 100%, 76% 100%, 74% calc(100% - 8px), 26% calc(100% - 8px), 24% 100%, 0 100%);
+      }
+
+      .card {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 260px 1px 1fr;
+        align-items: center;
+        gap: 62px;
+        width: 930px;
+      }
+
+      .mark {
+        width: 240px;
+        height: 240px;
+        object-fit: contain;
+      }
+
+      .rule {
+        width: 1px;
+        height: 210px;
+        background: linear-gradient(180deg, transparent, #f0f1eb 18% 82%, transparent);
+      }
+
+      h1 {
+        margin: 0;
+        font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+        font-size: 154px;
+        font-weight: 900;
+        line-height: 0.82;
+        letter-spacing: 0.035em;
+      }
+
+      .tagline {
+        margin: 35px 0 0;
+        font-family: "Courier New", monospace;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+      }
+
+      .tagline strong {
+        color: #cfff00;
+      }
+
+      .meta {
+        display: flex;
+        gap: 22px;
+        margin-top: 22px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        color: #aeb2aa;
+      }
+
+      .signal {
+        position: absolute;
+        right: 56px;
+        bottom: 46px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #cfff00;
+        box-shadow: 0 0 18px rgba(207, 255, 0, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <img class="mark" src="./saji-mark.png" alt="" />
+      <div class="rule"></div>
+      <div>
+        <h1>SAJI</h1>
+        <p class="tagline">MEASURED CARRY<strong>.</strong> SIGNED BY YOU<strong>.</strong></p>
+        <p class="meta"><span>ROBINHOOD CHAIN</span><span>NON-CUSTODIAL</span></p>
+      </div>
+    </main>
+    <span class="signal"></span>
+  </body>
+</html>

@@ -29,17 +29,17 @@ export default function TopNav({ variant = 'app' }: { variant?: 'app' | 'landing
 
   return (
     <header className={`topNav topNav--${variant}`}>
-      <Link to="/" className="topNav__brand" aria-label="Kaji home">
+      <Link to="/" className="topNav__brand" aria-label="SAJI home">
         <img
           className="topNav__brandMark"
-          src="/assets/kaji-protocol-mark.png"
+          src="/assets/saji-mark.png"
           width="38"
           height="38"
           alt=""
           aria-hidden="true"
         />
-        <span className="topNav__brandName">KAJI</span>
-        <span className="topNav__brandSuffix">PROTOCOL</span>
+        <span className="topNav__brandName">SAJI</span>
+        <span className="topNav__brandSuffix">CARRY FOUNDRY</span>
       </Link>
 
       <nav className="topNav__links" aria-label="Primary">
@@ -64,7 +64,7 @@ export default function TopNav({ variant = 'app' }: { variant?: 'app' | 'landing
           href="https://x.com/kajiprotocol"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Kaji on X (opens in a new tab)"
+          aria-label="SAJI on X (opens in a new tab)"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
             <path

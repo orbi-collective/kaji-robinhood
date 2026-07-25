@@ -1,6 +1,6 @@
-# KAJI — Autonomous Carry Foundry
+# SAJI — Autonomous Carry Foundry
 
-A non-custodial AI yield agent for Robinhood Chain. Kaji scans lending, spot and hedge venues, assembles candidate recipes, simulates net carry after every cost, validates each proposed action against a deterministic policy engine, and prepares a transaction the user signs themselves.
+A non-custodial AI yield agent for Robinhood Chain. SAJI scans lending, spot and hedge venues, assembles candidate recipes, simulates net carry after every cost, validates each proposed action against a deterministic policy engine, and prepares a transaction the user signs themselves.
 
 **It never takes custody and never moves funds outside a mandate.**
 
@@ -33,7 +33,7 @@ Landing  →  Scanner  →  Recipe + simulator  →  Transaction preview  →  V
 | `src/lib/policy.ts` | Deterministic policy engine + net-carry equation + stress simulation. Pure functions, no network, no randomness — the same inputs always produce the same verdict |
 | `src/lib/adapters.ts` | Live vault + Chainlink reads. Degrades per-row to demo data on failure rather than failing the page |
 | `src/lib/deposit.ts` | ERC-4626 deposit path: asset assertion, balance check, simulation, allowance |
-| `src/lib/abi.ts` | Minimal ABIs — only the functions Kaji calls |
+| `src/lib/abi.ts` | Minimal ABIs — only the functions SAJI calls |
 | `src/lib/chain.ts` | Robinhood Chain + wagmi config, all env-driven |
 | `src/state/AgentStore.tsx` | Mandate, positions and event log; persisted to localStorage |
 | `src/components/` | App shell, wallet, transaction preview, shared UI primitives |

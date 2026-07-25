@@ -1,6 +1,6 @@
 # Design
 
-Visual system for Kaji. Source of truth for tokens is `src/index.css`; this document explains intent and usage rules.
+Visual system for SAJI. Source of truth for tokens is `src/index.css`; this document explains intent and usage rules.
 
 ## Theme
 
