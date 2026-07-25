@@ -142,22 +142,6 @@
   filter: brightness(1.08);
 }
 
-/* Social sits with the right-hand actions at the same tap size as everything
-   else in the bar. */
-.topNav__social {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  color: var(--steel-light);
-  transition: color 150ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.topNav__social:hover {
-  color: var(--chalk);
-}
-
 /* ---------- responsive ---------- */
 
 @media (max-width: 1080px) {
@@ -247,10 +231,6 @@
     justify-content: center;
     padding-inline: 8px;
     font-size: 10px;
-  }
-
-  .topNav__social {
-    display: none;
   }
 
   .topNav--landing .topNav__right {
