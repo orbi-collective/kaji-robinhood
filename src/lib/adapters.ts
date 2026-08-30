@@ -1,25 +1,26 @@
-import { createPublicClient, formatUnits, http } from 'viem'
-import { aggregatorV3Abi, erc4626Abi } from './abi'
-import { IS_LIVE_CHAIN, MORPHO, PRICE_FEEDS, RPC_URL, VAULTS, robinhoodChain, type PriceFeedKey } from './chain'
+import { formatUnits } from 'viem'
+import { erc4626Abi } from './abi'
+import { IS_LIVE_CHAIN, MORPHO, PRICE_FEEDS, VAULTS, robinhoodChain } from './chain'
+import { publicClient } from './client'
+import { readPriceFeed } from './feeds'
+export { readPriceFeed, type FeedReading } from './feeds'
+import { fetchDistributionOpportunities } from './distribution'
 import { netCarry } from './policy'
 import type { CarryBreakdown, DataSource, Opportunity } from './types'
 
 /**
  * Venue adapters.
  *
- * Onchain state is the source of truth: TVL, liquidity, the vault's underlying
- * asset and oracle freshness are all read from contracts. Morpho's public API
- * supplies the forward APY, which cannot be derived from a single block; if it
- * is unreachable or returns an unexpected shape, the row degrades to reference
- * data and is labelled DEMO rather than silently showing a made-up yield.
+ * PONSAJI prices two classes of position against one another: ERC-4626 vaults,
+ * where capital compounds, and fee-distribution tokens, where capital buys a
+ * share of somebody else's trading volume. They are only comparable once every
+ * cost is subtracted, which is why they share a scanner and an engine.
+ *
+ * Onchain state is the source of truth throughout. Where a number cannot be
+ * read, the row degrades and is labelled rather than filled in.
  */
 
-export const publicClient = createPublicClient({
-  chain: robinhoodChain,
-  // A hung endpoint must not leave the UI pending forever — it degrades to
-  // demo instead.
-  transport: http(RPC_URL, { batch: true, retryCount: 1, timeout: 10_000 }),
-})
+export { publicClient }
 
 export class AdapterError extends Error {
   venue: string
@@ -100,35 +101,6 @@ export async function readVaultState(vault: (typeof VAULTS)[number]): Promise<Va
   }
 }
 
-export type FeedReading = {
-  pair: string
-  price: number
-  updatedAt: number
-  ageSeconds: number
-  heartbeatSeconds: number
-  stale: boolean
-}
-
-/** Reads a Chainlink feed and reports its age against the publisher's heartbeat. */
-export async function readPriceFeed(key: PriceFeedKey): Promise<FeedReading> {
-  const feed = PRICE_FEEDS[key]
-  const [, answer, , updatedAt] = await publicClient.readContract({
-    address: feed.address,
-    abi: aggregatorV3Abi,
-    functionName: 'latestRoundData',
-  })
-
-  const updated = Number(updatedAt)
-  const age = Math.max(0, Math.floor(Date.now() / 1000) - updated)
-  return {
-    pair: feed.pair,
-    price: Number(answer) / 10 ** feed.decimals,
-    updatedAt: updated,
-    ageSeconds: age,
-    heartbeatSeconds: feed.heartbeatSeconds,
-    stale: age > feed.heartbeatSeconds,
-  }
-}
 
 /**
  * Integrity guard. Confirms the configured vault really is an ERC-4626 over the
@@ -251,10 +223,11 @@ function buildOpportunity(
   const b = opts.breakdown
   return {
     recipe_id: vault.id,
+    kind: 'vault',
     name: vault.name,
     subtitle: vault.subtitle,
     profile: vault.profile,
-    inputs: { base_asset: vault.asset.symbol, lending_venue: 'morpho', hedge_venue: null },
+    inputs: { base_asset: vault.asset.symbol, venue: 'morpho', hedge_venue: null },
     ingredients: [{ label: vault.asset.symbol, venue: 'morpho', weight: 100 }],
     breakdown: b,
     gross_apy: b.lending_yield + b.funding_income + b.incentive_value,
@@ -265,12 +238,10 @@ function buildOpportunity(
     oracle_heartbeat_seconds: opts.heartbeatSeconds,
     tvl_usd: opts.tvlUsd,
     curator: vault.curator,
-    vault_address: vault.address,
+    contract_address: vault.address,
+    distribution: null,
     unavailable_reason: opts.unavailable ?? null,
-    confidence: opts.source === 'live' ? 0.92 : 0.6,
     requires_leverage: false,
-    trend_24h: 0,
-    trace: [4, 4.4, 4.2, 4.8, 4.6, 5.1, 4.9, 5.4, 5.2, 5.6],
     source: opts.source,
     as_of: Date.now(),
   }
@@ -355,7 +326,12 @@ export async function fetchOpportunities(signal?: AbortSignal): Promise<Opportun
     }),
   )
 
-  return results.sort(
+  // Both venue classes rank on one axis. A distribution row has no carry rate
+  // to speak of, so it sorts last on this measure — which is the honest
+  // outcome, not a bug: its return has to be earned back before it is a return.
+  const distribution = await fetchDistributionOpportunities(signal).catch(() => [])
+
+  return [...results, ...distribution].sort(
     (a, b) => b.estimated_net_carry / (b.risk_score || 1) - a.estimated_net_carry / (a.risk_score || 1),
   )
 }
@@ -363,4 +339,89 @@ export async function fetchOpportunities(signal?: AbortSignal): Promise<Opportun
 export async function fetchOpportunity(id: string, signal?: AbortSignal): Promise<Opportunity | null> {
   const all = await fetchOpportunities(signal)
   return all.find((o) => o.recipe_id === id) ?? null
+}
+
+/* ------------------------------------------------------------------ */
+/* Owner positions — what a wallet actually holds, read from chain     */
+/* ------------------------------------------------------------------ */
+
+export type OwnerPosition = {
+  recipe_id: string
+  recipe_name: string
+  subtitle: string
+  vault_address: `0x${string}`
+  /** Vault shares held by the owner. */
+  shares: bigint
+  /** Those shares valued in the vault's underlying asset. */
+  assets: bigint
+  assetSymbol: string
+  assetDecimals: number
+  valueUsd: number
+  /**
+   * The vault's own `maxWithdraw` answer for this owner, or `null` when the
+   * call reverts. Not a liquidity guarantee: the Vault V2 deployments PONSAJI
+   * reads return 0 for every holder, so a zero here means "the contract does
+   * not expose an instant exit for this wallet", not "the money is gone". Exit
+   * depth on the scanner comes from a different source and is labelled as such.
+   */
+  maxWithdrawUsd: number | null
+}
+
+/**
+ * Reads a wallet's real vault holdings.
+ *
+ * The local event log records what this browser did; this reads what the chain
+ * says the wallet owns. A deposit made from another device — or directly on
+ * Morpho — belongs on the vault page just as much as one made here, so the
+ * chain is the authority and local state only supplies the narrative.
+ */
+export async function readOwnerPositions(owner: `0x${string}`): Promise<OwnerPosition[]> {
+  if (!IS_LIVE_CHAIN) return []
+
+  const results = await Promise.all(
+    VAULTS.map(async (vault): Promise<OwnerPosition | null> => {
+      try {
+        const shares = await publicClient.readContract({
+          address: vault.address,
+          abi: erc4626Abi,
+          functionName: 'balanceOf',
+          args: [owner],
+        })
+        if (shares === 0n) return null
+
+        const [assets, maxWithdraw] = await Promise.all([
+          publicClient.readContract({
+            address: vault.address,
+            abi: erc4626Abi,
+            functionName: 'convertToAssets',
+            args: [shares],
+          }),
+          // A revert here is "unknown", not "zero" — the two must not collapse
+          // into the same number on screen.
+          publicClient
+            .readContract({ address: vault.address, abi: erc4626Abi, functionName: 'maxWithdraw', args: [owner] })
+            .catch(() => null),
+        ])
+
+        const toUsd = (v: bigint) => Number(formatUnits(v, vault.asset.decimals))
+        return {
+          recipe_id: vault.id,
+          recipe_name: vault.name,
+          subtitle: vault.subtitle,
+          vault_address: vault.address,
+          shares,
+          assets,
+          assetSymbol: vault.asset.symbol,
+          assetDecimals: vault.asset.decimals,
+          valueUsd: toUsd(assets),
+          maxWithdrawUsd: maxWithdraw === null ? null : toUsd(maxWithdraw),
+        }
+      } catch {
+        // One unreachable vault must not blank the whole page.
+        return null
+      }
+    }),
+  )
+
+  return results.filter((p): p is OwnerPosition => p !== null)
 }

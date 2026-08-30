@@ -1,0 +1,89 @@
+/* First-visit risk acknowledgement. Machined panel, no soft edges. */
+
+.riskGate {
+  border: 1px solid var(--steel);
+  background: var(--panel-black);
+  color: var(--chalk);
+  padding: 0;
+  max-width: 640px;
+  width: calc(100% - 32px);
+  border-radius: 2px;
+}
+
+.riskGate::backdrop {
+  background: rgba(6, 7, 6, 0.88);
+}
+
+.riskGate__inner {
+  padding: 34px 36px 30px;
+}
+
+.riskGate__eyebrow {
+  display: block;
+  color: var(--signal-lime);
+  margin-bottom: 12px;
+}
+
+.riskGate__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 42px;
+  line-height: 0.95;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  margin: 0 0 26px;
+}
+
+.riskGate__list {
+  list-style: none;
+  margin: 0 0 28px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--steel-border);
+}
+
+.riskGate__item {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--steel-border);
+}
+
+.riskGate__itemTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--chalk);
+  margin: 0 0 6px;
+}
+
+.riskGate__itemBody {
+  font-size: 13.5px;
+  line-height: 1.62;
+  color: var(--steel-light);
+  margin: 0;
+  max-width: 66ch;
+}
+
+.riskGate__accept {
+  width: 100%;
+  justify-content: center;
+}
+
+.riskGate__foot {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--steel);
+  margin: 14px 0 0;
+}
+
+@media (max-width: 560px) {
+  .riskGate__inner {
+    padding: 24px 20px 22px;
+  }
+
+  .riskGate__title {
+    font-size: 32px;
+  }
+}

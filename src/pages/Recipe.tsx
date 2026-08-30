@@ -6,6 +6,10 @@ import { AppShell } from '../components/AppShell'
 import TxPreview from '../components/TxPreview'
 import { EmptyState, ErrorState, Skeleton, SourceTag, VerdictTag } from '../components/ui'
 import { fetchOpportunity } from '../lib/adapters'
+import { measureAndPriceCycle } from '../lib/distribution'
+import { readActionGasUsd, readPriceFeed } from '../lib/feeds'
+import { computeBreakEven, DEFAULT_BREAKEVEN_INPUT, formatDays } from '../lib/breakeven'
+import BreakEvenPanel from '../components/BreakEvenPanel'
 import { evaluatePolicy, formatDuration, simulate } from '../lib/policy'
 import { DEFAULT_MANDATE, type PreparedTransaction, type SimulationInput } from '../lib/types'
 import { useAgent } from '../state/AgentStore'
@@ -25,7 +29,7 @@ const RESPONSE_COPY: Record<string, { label: string; tone: string }> = {
 
 export default function Recipe() {
   const { recipeId } = useParams()
-  const { mandate } = useAgent()
+  const { mandate, totalCapital } = useAgent()
   const active = mandate ?? DEFAULT_MANDATE
 
   const {
@@ -58,9 +62,53 @@ export default function Recipe() {
   )
 
   const simulation = useMemo(() => (opportunity ? simulate(opportunity, input) : null), [opportunity, input])
+
+  // Measuring a cycle reads thousands of logs, so it is its own query: the rest
+  // of the page renders while it runs, and a failure degrades one panel rather
+  // than the whole recipe.
+  // Gas is a real cost and a readable one; guessing it would put an invented
+  // number inside a cost ladder whose whole point is that it is measured.
+  const { data: gas } = useQuery({
+    queryKey: ['action-gas'],
+    queryFn: async () => {
+      const eth = await readPriceFeed('ETH_USD').catch(() => null)
+      return readActionGasUsd(eth?.price ?? null)
+    },
+    staleTime: 120_000,
+  })
+
+  const { data: cycle, isFetching: cycleLoading } = useQuery({
+    queryKey: ['cycle', opportunity?.recipe_id],
+    queryFn: ({ signal }) => measureAndPriceCycle(opportunity!, signal),
+    enabled: Boolean(opportunity?.distribution),
+    staleTime: 120_000,
+  })
+
+  // The measured terms supersede the scanner's cheap ones once they arrive.
+  const measured = useMemo(
+    () => (opportunity && cycle ? { ...opportunity, distribution: cycle.terms } : opportunity),
+    [opportunity, cycle],
+  )
+
+  const breakEven = useMemo(
+    () =>
+      measured?.distribution
+        ? computeBreakEven(measured, {
+            ...DEFAULT_BREAKEVEN_INPUT,
+            capital_usd: capital,
+            per_token_usd: cycle?.perTokenUsd ?? null,
+            gas_per_action_usd: gas?.usd ?? null,
+            gas_basis: gas?.basis ?? 'not read',
+          })
+        : null,
+    [measured, capital, cycle, gas],
+  )
+
+  // Judged against the measured terms, not the scanner's cheap ones: the
+  // break-even check is only meaningful once a real payout has been read.
   const policy = useMemo(
-    () => (opportunity && simulation ? evaluatePolicy(active, opportunity, simulation, capital) : null),
-    [opportunity, simulation, active, capital],
+    () => (measured && simulation ? evaluatePolicy(active, measured, simulation, capital, totalCapital, breakEven) : null),
+    [measured, simulation, active, capital, totalCapital, breakEven],
   )
 
   const prepared: PreparedTransaction | null = useMemo(() => {
@@ -71,19 +119,26 @@ export default function Recipe() {
       capital_usd: capital,
       risk_score: opportunity.risk_score,
       steps: [
-        {
-          venue: `${opportunity.curator} · Morpho`,
-          action: `Deposit ${opportunity.inputs.base_asset} into ${opportunity.name} vault`,
-          amount_usd: capital,
-          contract: opportunity.vault_address,
-        },
+        opportunity.kind === 'distribution'
+          ? {
+              venue: opportunity.curator,
+              action: `Buy ${opportunity.distribution?.token_symbol ?? 'token'} with ${opportunity.inputs.base_asset}`,
+              amount_usd: capital,
+              contract: opportunity.contract_address,
+            }
+          : {
+              venue: `${opportunity.curator} · Morpho`,
+              action: `Deposit ${opportunity.inputs.base_asset} into ${opportunity.name} vault`,
+              amount_usd: capital,
+              contract: opportunity.contract_address,
+            },
       ],
-      estimated_gas_usd: 0.02,
+      estimated_gas_usd: gas?.usd ?? 0,
       policy,
       simulation,
       prepared_at: Date.now(),
     }
-  }, [opportunity, simulation, policy, capital])
+  }, [opportunity, simulation, policy, capital, gas])
 
   return (
     <AppShell plate={<ScenePlate scene="kaji-recipe" className="recipePage__plate" />}>
@@ -138,19 +193,44 @@ export default function Recipe() {
                 <span className="lime-period">.</span>
               </h1>
               <p className="recipePage__desc">
-                {opportunity.ingredients.map((i) => i.label).join(', ')} — assembled under one mandate and validated
-                before anything reaches your wallet.
+                {opportunity.distribution
+                  ? `${opportunity.distribution.token_symbol} — a fee-distribution position, priced against your mandate before anything reaches your wallet.`
+                  : `${opportunity.ingredients.map((i) => i.label).join(', ')} — assembled under one mandate and validated before anything reaches your wallet.`}
               </p>
 
+              {/* A vault's headline is a rate it pays; a distribution token's is
+                  a cost it charges. Showing "0.00% net carry" for the latter
+                  would read as a measurement rather than a category error. */}
               <div className="statGrid" role="group" aria-label="Recipe estimates">
-                <div className="statGrid__cell">
-                  <span className="mono-label">EST. NET CARRY</span>
-                  <span className="statGrid__value statGrid__value--lime">{pct(simulation.net_carry)}</span>
-                </div>
-                <div className="statGrid__cell">
-                  <span className="mono-label">GROSS</span>
-                  <span className="statGrid__value">{pct(opportunity.gross_apy)}</span>
-                </div>
+                {measured?.distribution ? (
+                  <>
+                    <div className="statGrid__cell">
+                      <span className="mono-label">ROUND TRIP COST</span>
+                      <span className="statGrid__value statGrid__value--warn">
+                        {breakEven ? `−${(breakEven.round_trip_bps / 100).toFixed(2)}%` : '—'}
+                      </span>
+                    </div>
+                    <div className="statGrid__cell">
+                      <span className="mono-label">BREAK-EVEN, DECAYING</span>
+                      <span className="statGrid__value">
+                        {breakEven && !breakEven.blocked_by
+                          ? formatDays(breakEven.days_by_regime.decay_50_week)
+                          : '—'}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="statGrid__cell">
+                      <span className="mono-label">EST. NET CARRY</span>
+                      <span className="statGrid__value statGrid__value--lime">{pct(simulation.net_carry)}</span>
+                    </div>
+                    <div className="statGrid__cell">
+                      <span className="mono-label">GROSS</span>
+                      <span className="statGrid__value">{pct(opportunity.gross_apy)}</span>
+                    </div>
+                  </>
+                )}
                 <div className="statGrid__cell">
                   <span className="mono-label">RISK</span>
                   <span className="statGrid__value">
@@ -159,17 +239,34 @@ export default function Recipe() {
                   </span>
                 </div>
                 <div className="statGrid__cell">
-                  <span className="mono-label">EXIT LIQUIDITY</span>
-                  <span className="statGrid__value statGrid__value--lime">{usd(simulation.realizable_exit_usd)}</span>
+                  <span className="mono-label">
+                    {measured?.distribution ? 'EXIT @ 5% IMPACT' : 'EXIT LIQUIDITY'}
+                  </span>
+                  <span
+                    className="statGrid__value statGrid__value--lime"
+                    title={
+                      measured?.distribution
+                        ? 'What a seller can take out of the pool before the price falls 5%. This is not the token’s market value — a token can be worth millions in aggregate while ten thousand dollars of selling moves it five percent.'
+                        : 'Liquid share of the vault'
+                    }
+                  >
+                    {usd(measured?.distribution ? opportunity.exit_liquidity_usd : simulation.realizable_exit_usd)}
+                  </span>
                 </div>
                 <div className="statGrid__cell">
                   <span className="mono-label">ORACLE AGE</span>
-                  <span
-                    className="statGrid__value"
-                    title={`Chainlink heartbeat ${formatDuration(opportunity.oracle_heartbeat_seconds)}`}
-                  >
-                    {formatDuration(opportunity.oracle_age_seconds)}
-                  </span>
+                  {opportunity.oracle_age_seconds === null ? (
+                    <span className="statGrid__value statGrid__value--none" title="This venue references no price oracle">
+                      NO ORACLE
+                    </span>
+                  ) : (
+                    <span
+                      className="statGrid__value"
+                      title={`Chainlink heartbeat ${formatDuration(opportunity.oracle_heartbeat_seconds ?? 0)}`}
+                    >
+                      {formatDuration(opportunity.oracle_age_seconds)}
+                    </span>
+                  )}
                 </div>
                 <div className="statGrid__cell">
                   <span className="mono-label">DATA SOURCE</span>
@@ -210,6 +307,14 @@ export default function Recipe() {
                   </div>
                 </dl>
               </details>
+
+              {breakEven && measured && (
+                <BreakEvenPanel
+                  opportunity={measured}
+                  breakEven={breakEven}
+                  cycleBasis={cycle?.basis ?? (cycleLoading ? 'Reading one cycle from its own logs…' : null)}
+                />
+              )}
             </div>
 
             <aside className="mandateCard" aria-label="Policy status">
@@ -226,7 +331,7 @@ export default function Recipe() {
                   </span>
                 </div>
               ))}
-              <Link to="/mandates/new" className="mandateCard__edit mono-label">
+              <Link to="/opportunities?limits=1" className="mandateCard__edit mono-label">
                 EDIT MANDATE →
               </Link>
             </aside>

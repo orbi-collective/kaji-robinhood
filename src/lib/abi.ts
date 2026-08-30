@@ -1,4 +1,4 @@
-/** Minimal ABIs — only the functions SAJI actually calls. */
+/** Minimal ABIs — only the functions PONSAJI actually calls. */
 
 export const erc20Abi = [
   {
@@ -106,4 +106,76 @@ export const aggregatorV3Abi = [
   },
   { type: 'function', name: 'decimals', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint8' }] },
   { type: 'function', name: 'description', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] },
+] as const
+
+/** Uniswap v4 PoolManager. `extsload` is the only way to read pool state. */
+export const poolManagerAbi = [
+  {
+    type: 'function',
+    name: 'extsload',
+    stateMutability: 'view',
+    inputs: [{ name: 'slot', type: 'bytes32' }],
+    outputs: [{ type: 'bytes32' }],
+  },
+] as const
+
+/** The Index — fee hook, distributor. Only the views PONSAJI reads. */
+export const indexFeeHookAbi = [
+  { type: 'function', name: 'FEE_BPS', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+] as const
+
+export const indexDistributorAbi = [
+  { type: 'function', name: 'interval', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { type: 'function', name: 'nextDistribution', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+] as const
+
+/**
+ * Quotrons view quoter. Free, allowance-free, and it returns the fee breakdown
+ * per swap — the cost side of a round trip without simulating anything.
+ */
+export const quotronQuoterAbi = [
+  {
+    type: 'function',
+    name: 'quoteBuyExactEth',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'ethIn', type: 'uint256' },
+      { name: 'payer', type: 'address' },
+    ],
+    outputs: [
+      { name: 'quotronOut', type: 'uint256' },
+      { name: 'feeBps', type: 'uint256' },
+      { name: 'feeWeth', type: 'uint256' },
+      { name: 'poolWethIn', type: 'uint256' },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'quoteSellExactQuotron',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'quotronIn', type: 'uint256' },
+      { name: 'payer', type: 'address' },
+    ],
+    outputs: [
+      { name: 'ethOut', type: 'uint256' },
+      { name: 'feeBps', type: 'uint256' },
+      { name: 'feeWeth', type: 'uint256' },
+      { name: 'poolWethOut', type: 'uint256' },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'currentFeeBps',
+    stateMutability: 'view',
+    inputs: [{ name: 'payer', type: 'address' }],
+    outputs: [{ type: 'uint256' }],
+  },
+] as const
+
+/** Quotrons ERC-404 core. The invariant is worth reading and showing. */
+export const quotronTokenAbi = [
+  { type: 'function', name: 'totalSupply', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { type: 'function', name: 'totalHardwired', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
+  { type: 'function', name: 'economicUnits', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint256' }] },
 ] as const

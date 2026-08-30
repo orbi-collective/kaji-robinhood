@@ -1,5 +1,5 @@
 {
-  "name": "saji",
+  "name": "ponsaji",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +7,18 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run && forge test",
+    "test:watch": "vitest",
+    "crank": "tsx scripts/crank.ts",
+    "crank:execute": "tsx scripts/crank.ts --execute",
+    "survey:payout": "tsx scripts/survey-payout.ts",
+    "verify:ledger": "tsx scripts/verify-ledger.ts",
+    "preflight": "tsx scripts/preflight.ts",
+    "test:unit": "vitest run",
+    "test:contracts": "forge test",
+    "test:fork": "forge test --match-contract ForkTest --fork-url https://rpc.mainnet.chain.robinhood.com",
+    "deploy:payroll": "forge script contracts/script/DeployPayroll.s.sol --rpc-url https://rpc.mainnet.chain.robinhood.com --broadcast"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",
@@ -23,7 +34,9 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "tsx": "^4.23.12",
     "typescript": "~6.0.2",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "vitest": "^4.1.11"
   }
 }

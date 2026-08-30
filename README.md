@@ -1,8 +1,14 @@
-# SAJI — Autonomous Carry Foundry
+# PONSAJI — Carry Foundry
 
-A non-custodial AI yield agent for Robinhood Chain. SAJI scans lending, spot and hedge venues, assembles candidate recipes, simulates net carry after every cost, validates each proposed action against a deterministic policy engine, and prepares a transaction the user signs themselves.
+A non-custodial measuring instrument for Robinhood Chain. PONSAJI prices two classes of stablecoin position against each other — **ERC-4626 vaults**, where capital compounds, and **fee-distribution tokens**, where capital buys a share of somebody else's trading volume — subtracts every cost, and refuses to prepare anything that breaks a mandate you set.
 
-**It never takes custody and never moves funds outside a mandate.**
+**It never takes custody, never signs, and runs no background process. Your wallet is the only signer.**
+
+## Why the second venue class exists
+
+Both fee-distribution protocols on this chain advertise what they pay. Neither shows what a position costs to enter and exit, how fast the payout is decaying, or how long capital must sit before the income has repaid the round trip.
+
+PONSAJI computes that, states it under three volume regimes, and blocks the position when it fails your mandate. On a $1,000 position in The Index at the time of writing, the answer is: **53 days if volume holds flat, and never under any decaying regime** — against a 6% round trip read straight from the fee hook.
 
 ```bash
 npm install
@@ -11,6 +17,23 @@ npm run build    # typecheck + production bundle to dist/
 npm run lint
 ```
 
+## The break-even model
+
+For a pro-rata distribution the cycle total cancels out of the income equation, so one recipient's payout divided by their balance is the whole answer. PONSAJI samples five real payouts rather than summing a cycle of several thousand — exact, and far more robust across a flaky public endpoint.
+
+```
+round_trip       = entry_fee + exit_fee + price_impact + gas
+payout_per_token = payout_to_recipient / recipient_balance
+income_per_day   = payout_per_token × tokens_held × payout_price × legs × cycles_per_day
+
+k     = ln(weekly_retention) / 7
+days  = ln(1 + cost·k / income_per_day) / k
+```
+
+When the decaying series converges below the cost, the position never repays and PONSAJI reports `NEVER` rather than a large number that looks like a long wait.
+
+Sampling several recipients also turns each venue's pro-rata claim into something *checked* rather than repeated: if the sampled payouts per token disagree, the row says so.
+
 ## End-to-end user flow
 
 ```
@@ -18,12 +41,12 @@ Landing  →  Scanner  →  Recipe + simulator  →  Transaction preview  →  V
    /       /opportunities   /recipes/:id      (policy-gated deposit)  /vaults/:addr  /security
 ```
 
-1. **Mandate** (`/mandates/new`) compiles typed constraints — capital cap, drawdown, slippage, exit-liquidity floor, leverage, approval mode — into the policy engine. Validated per field; persisted locally.
-2. **Scanner** (`/opportunities`) ranks recipes by net carry per unit of risk and stamps each row with its own policy verdict against your mandate. Anything the engine would refuse is marked `BLOCKED` and cannot be prepared.
+1. **Scanner** (`/opportunities`) ranks recipes by net carry per unit of risk and stamps each row with its own policy verdict against your mandate. Anything the engine would refuse is marked `BLOCKED` and cannot be prepared.
+2. **Limits** live in a panel on the scanner (`?limits=1`), not a page of their own — you change a ceiling and watch the verdicts move. Typed constraints: capital cap, drawdown, slippage, exit-liquidity floor, round trip, break-even, leverage, approval mode. Validated per field; persisted locally.
 3. **Recipe** (`/recipes/:id`) itemises the full net-carry breakdown, runs the five-input simulator, and shows what breaks the strategy.
 4. **Transaction preview** states every step the wallet is asked to sign, every policy check with its observed-vs-bound values, and the estimate's assumptions — before any signature.
-5. **Vault** (`/vaults/:address`) monitors deployed capital, allocation, risk budget and the agent event log.
-6. **Security** (`/security`) computes guardrails from live state and carries the emergency stop, which revokes session access and holds every position.
+5. **Vault** (`/vaults/:address`) shows deployed capital, allocation, risk budget and the event log, re-read from the chain each time it is opened.
+6. **Security** (`/security`) computes guardrails from live state. It carries no stop control: nothing runs in the background, so there would be nothing for one to halt.
 
 ## Architecture
 
@@ -31,9 +54,14 @@ Landing  →  Scanner  →  Recipe + simulator  →  Transaction preview  →  V
 |---|---|
 | `src/lib/types.ts` | Domain model — mandate, opportunity, policy, simulation, position |
 | `src/lib/policy.ts` | Deterministic policy engine + net-carry equation + stress simulation. Pure functions, no network, no randomness — the same inputs always produce the same verdict |
-| `src/lib/adapters.ts` | Live vault + Chainlink reads. Degrades per-row to demo data on failure rather than failing the page |
+| `src/lib/adapters.ts` | Vault reads, and the merge of both venue classes into one ranked list |
+| `src/lib/distribution.ts` | Fee-distribution venues — fees, cadence, payout sampling, pro-rata verification |
+| `src/lib/breakeven.ts` | Round-trip cost ladder and the decay-regime horizon |
+| `src/lib/uniswapV4.ts` | v4 pool-key derivation and `extsload` price reads — the only onchain price source on this chain |
+| `src/lib/venues.ts` | Distribution venue configuration and the tokenized-stock basket |
+| `src/lib/feeds.ts` | Chainlink reads, shared by both venue classes |
 | `src/lib/deposit.ts` | ERC-4626 deposit path: asset assertion, balance check, simulation, allowance |
-| `src/lib/abi.ts` | Minimal ABIs — only the functions SAJI calls |
+| `src/lib/abi.ts` | Minimal ABIs — only the functions PONSAJI calls |
 | `src/lib/chain.ts` | Robinhood Chain + wagmi config, all env-driven |
 | `src/state/AgentStore.tsx` | Mandate, positions and event log; persisted to localStorage |
 | `src/components/` | App shell, wallet, transaction preview, shared UI primitives |
@@ -80,13 +108,25 @@ Allowance is requested only when short, and only for the exact amount. `verifyDe
 
 Static SPA. `vercel.json` (rewrites, immutable asset caching, security headers) and `public/_redirects` (Netlify) are included; any host needs the SPA fallback to `index.html`.
 
+## Machine-readable
+
+`/llms.txt` and `/llms-full.txt` carry the whole model — every equation, source, policy check and known limit — as plain text at the standard paths. The full page text also renders in the DOM, collapsed sections included, so assistants and crawlers read the substance rather than a summary.
+
+## Known limits
+
+- **No background process.** Nothing is monitored while the tab is closed.
+- **One payout leg is measured** and scaled by the leg count each venue states it splits its basket across. That scaling is a documented claim, not a measurement, and is labelled wherever it appears.
+- **The public RPC intermittently returns a malformed CORS header** (`Access-Control-Allow-Origin: *,*`), which browsers reject. Reads retry, and whatever still fails degrades visibly.
+- **`maxWithdraw` returns 0** on every Morpho Vault V2 holder PONSAJI has read. That is the contract declining to expose an instant exit, not a statement about the depositor's money, and it is reported as such.
+- **Session keys are not deployed.** Manual signing is the only mode this build can honour, so there is no standing key and nothing to revoke.
+
 ## Media
 
 Physical foundry scenes are generated media plates (`public/assets/kaji-<scene>-*`), never screenshots of UI. Each carries a poster, a WebM and an MP4; the hero adds a 9:16 mobile composition. `ScenePlate` handles poster layering, viewport/visibility pause-resume, and the mobile source swap. `prefers-reduced-motion` receives posters with no loss of content, and the product remains fully usable if video fails.
 
 ## Accessibility
 
-WCAG 2.1 AA. Verified body contrast 9.2–17.8:1; keyboard operable throughout including the transaction preview and emergency stop (native `<dialog>`); skip link and route focus management; every state carries a text label as well as a colour.
+WCAG 2.1 AA. Verified body contrast 9.2–17.8:1; keyboard operable throughout including the transaction preview (native `<dialog>`); skip link and route focus management; every state carries a text label as well as a colour.
 
 ---
 

@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { AppShell } from '../components/AppShell'
-import { Dialog, VerdictTag, relativeTime } from '../components/ui'
-import { useWalletGate } from '../components/Wallet'
+import { VerdictTag, relativeTime } from '../components/ui'
 import {
   CHAIN_ID,
   CHAIN_NAME,
@@ -32,20 +31,26 @@ type Guardrail = {
 
 /**
  * The hard boundary. These are not policy settings a user can widen — they are
- * properties of how the agent is built, which is the actual trust argument.
+ * properties of how this app is built, which is the actual trust argument.
  */
+/** Allowlist entries are slugs; people read names. */
+const VENUE_NAMES: Record<string, string> = {
+  morpho: 'Morpho',
+  'the-index': 'The Index',
+  quotrons: 'Quotrons',
+  hood10: 'HOOD10',
+}
+
 const PROHIBITIONS = [
   { rule: 'Invent calldata', why: 'Every transaction is assembled from a fixed template and simulated before you see it.' },
   { rule: 'Bypass the allowlist', why: 'Interactions outside your approved venues are refused, not flagged.' },
-  { rule: 'Raise its own limits', why: 'Spend, leverage and slippage ceilings can only be changed by you, in the mandate.' },
-  { rule: 'Move funds outside the mandate', why: 'SAJI never takes custody. Your wallet is the only signer.' },
+  { rule: 'Raise your limits', why: 'Spend, leverage and slippage ceilings can only be changed by you, in the mandate.' },
+  { rule: 'Move funds outside the mandate', why: 'PONSAJI never takes custody. Your wallet is the only signer.' },
   { rule: 'Promise a return', why: 'Every figure is an estimate carrying its inputs, timestamp and what breaks it.' },
 ]
 
 export default function Security() {
-  const { mandate, positions, agentPaused, killSwitchAt, killSwitch, totalCapital } = useAgent()
-  const { isConnected } = useWalletGate()
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  const { mandate, totalCapital } = useAgent()
   const active = mandate ?? DEFAULT_MANDATE
 
   const { data: opportunities, dataUpdatedAt } = useQuery({
@@ -65,22 +70,29 @@ export default function Security() {
   /** Guardrails are computed from live state, never hard-coded rows. */
   const guardrails = useMemo<Guardrail[]>(() => {
     const now = Date.now()
-    const stalest = (opportunities ?? []).reduce((max, o) => Math.max(max, o.oracle_age_seconds), 0)
-    const heartbeat = (opportunities ?? []).reduce((min, o) => Math.min(min, o.oracle_heartbeat_seconds || 3600), 86_400)
-    const openPositions = positions.filter((p) => p.status !== 'closed')
+    // Only rows that actually reference an oracle may set the freshness bound.
+    // Folding a venue that has no oracle into this reduce would substitute a
+    // default heartbeat and make healthy feeds read as stale.
+    const oracleRows = (opportunities ?? []).filter(
+      (o) => o.oracle_age_seconds !== null && o.oracle_heartbeat_seconds !== null,
+    )
+    const stalest = oracleRows.reduce((max, o) => Math.max(max, o.oracle_age_seconds ?? 0), 0)
+    const heartbeat = oracleRows.length
+      ? oracleRows.reduce((min, o) => Math.min(min, o.oracle_heartbeat_seconds ?? Infinity), Infinity)
+      : 0
+    const oracleFree = (opportunities ?? []).length - oracleRows.length
     const usd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`
 
     return [
       {
-        id: 'session_key',
-        name: 'Session key scope',
-        verdict: killSwitchAt ? 'block' : active.approval_mode === 'manual' ? 'pass' : 'review',
-        detail: killSwitchAt
-          ? `Revoked ${relativeTime(killSwitchAt)} — no key can act until you re-authorise.`
-          : active.approval_mode === 'manual'
-            ? 'No standing key. Every action requires your signature.'
-            : 'Key scoped to this mandate and time window; revocable at any time.',
-        bound: active.approval_mode === 'manual' ? 'manual only' : 'scoped key',
+        id: 'signing',
+        name: 'Signing authority',
+        verdict: 'pass',
+        // There is no session-key mechanism in this build, so there is no scope
+        // to report and nothing that could be revoked. The honest check is that
+        // no key exists at all.
+        detail: 'No standing key exists. Every action requires your signature, and nothing is prepared while this tab is closed.',
+        bound: 'manual only',
         checkedAt: now,
       },
       {
@@ -88,7 +100,7 @@ export default function Security() {
         name: 'Protocol allowlist',
         verdict: 'pass',
         detail: `Interactions are restricted to ${active.protocol_allowlist
-          .map((v) => v.charAt(0).toUpperCase() + v.slice(1))
+          .map((v) => VENUE_NAMES[v] ?? v)
           .join(', ')}. Anything else is refused, not flagged.`,
         bound: `${active.protocol_allowlist.length} venue${active.protocol_allowlist.length > 1 ? 's' : ''}`,
         checkedAt: now,
@@ -96,12 +108,17 @@ export default function Security() {
       {
         id: 'oracle',
         name: 'Oracle freshness',
-        verdict: stalest > heartbeat ? 'review' : 'pass',
-        detail:
-          stalest > heartbeat
+        verdict: !oracleRows.length ? 'review' : stalest > heartbeat ? 'review' : 'pass',
+        detail: !oracleRows.length
+          ? 'No venue in this scan references a price oracle, so there is no feed freshness to report.'
+          : stalest > heartbeat
             ? `Stalest feed ${formatDuration(stalest)}, past its heartbeat — execution paused on affected recipes.`
-            : `All Chainlink feeds reporting inside their publisher heartbeat.`,
-        bound: `${formatDuration(stalest)} / ${formatDuration(heartbeat)}`,
+            : `All Chainlink feeds reporting inside their publisher heartbeat.${
+                oracleFree > 0
+                  ? ` ${oracleFree} venue${oracleFree > 1 ? 's' : ''} in this scan reference no oracle at all.`
+                  : ''
+              }`,
+        bound: oracleRows.length ? `${formatDuration(stalest)} / ${formatDuration(heartbeat)}` : 'n/a',
         checkedAt: now,
       },
       {
@@ -135,23 +152,13 @@ export default function Security() {
         verdict: totalCapital > active.capital_usd ? 'block' : 'pass',
         detail:
           totalCapital > active.capital_usd
-            ? 'Deployed capital exceeds the mandate cap. No further action will be prepared.'
+            ? 'Deployed capital exceeds the mandate cap. Every further position is blocked.'
             : 'Projected spend within the mandate cap.',
         bound: `${usd(totalCapital)} / ${usd(active.capital_usd)}`,
         checkedAt: now,
       },
-      {
-        id: 'revoke',
-        name: 'Revoke access',
-        verdict: 'pass',
-        detail: killSwitchAt
-          ? 'Kill-switch engaged. Positions are held, nothing is being prepared.'
-          : 'Access is revocable at any time and the kill-switch is armed.',
-        bound: openPositions.length ? `${openPositions.length} open` : 'no positions',
-        checkedAt: now,
-      },
     ]
-  }, [opportunities, active, positions, killSwitchAt, totalCapital, deployment])
+  }, [opportunities, active, totalCapital, deployment])
 
   const engineVerdict: PolicyVerdict = guardrails.some((g) => g.verdict === 'block')
     ? 'block'
@@ -174,11 +181,11 @@ export default function Security() {
         <header className="securityHead">
           <div className="securityHead__copy">
             <h1 className="display-h1 securityHead__h1">
-              If the recipe changes, the machine stops<span className="lime-period">.</span>
+              Nothing here can move your money<span className="lime-period">.</span>
             </h1>
             <p className="securityHead__sub">
-              SAJI never takes custody. Every action is simulated and checked against your mandate before it reaches
-              your wallet — and you can revoke its access in one click.
+              PONSAJI never takes custody, holds no key, and runs nothing in the background. Every action is simulated and
+              checked against your mandate, then handed to your wallet to sign or refuse.
             </p>
           </div>
 
@@ -254,7 +261,7 @@ export default function Security() {
           <section className="prohibitions" aria-labelledby="never-title">
             <div className="sectionHead">
               <h2 id="never-title" className="sectionHead__title">
-                What SAJI can never do
+                What PONSAJI can never do
               </h2>
               <span className="mono-label sectionHead__meta">NOT A SETTING</span>
             </div>
@@ -313,64 +320,12 @@ export default function Security() {
           </section>
         </div>
 
-        <section className={`killSwitch ${killSwitchAt ? 'killSwitch--engaged' : ''}`} aria-labelledby="stop-heading">
-          <div className="killSwitch__copy">
-            <h2 id="stop-heading" className="killSwitch__title">
-              Emergency stop
-            </h2>
-            <p>
-              {killSwitchAt
-                ? `Engaged ${relativeTime(killSwitchAt)}. Session access is revoked and every position is held in place.`
-                : 'Revokes session access immediately and holds all positions. Funds stay in your wallet either way.'}
-            </p>
-          </div>
-          <button
-            className="killSwitch__btn"
-            onClick={() => setConfirmOpen(true)}
-            disabled={Boolean(killSwitchAt)}
-            aria-describedby="killswitch-desc"
-          >
-            {killSwitchAt ? 'STOP ENGAGED' : 'ENGAGE EMERGENCY STOP'}
-          </button>
-          <span id="killswitch-desc" className="visually-hidden">
-            {killSwitchAt ? 'Emergency stop already engaged' : 'Opens a confirmation dialog before revoking agent access'}
-          </span>
-        </section>
-
         <p className="securityPage__disclosure">
-          {agentPaused && !killSwitchAt ? 'Agent paused. ' : ''}Estimates are informational and do not guarantee
-          returns. Onchain strategies involve loss, liquidity, oracle and smart-contract risk.
+          Estimates are informational and do not guarantee returns. Onchain strategies involve loss, liquidity, oracle
+          and smart-contract risk.
         </p>
       </div>
 
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} labelledBy="stop-title" className="stopDialog">
-        <div className="stopDialog__body">
-          <h2 id="stop-title" className="stopDialog__title">
-            Engage emergency stop?
-          </h2>
-          <p className="stopDialog__text">
-            Session access is revoked immediately and the agent prepares no further actions. Open positions are held,
-            not closed — nothing is sold and no funds move. You can re-authorise from the mandate builder afterwards.
-          </p>
-          {!isConnected && (
-            <p className="stopDialog__note">No wallet is connected, so this revokes the local session only.</p>
-          )}
-        </div>
-        <div className="stopDialog__foot">
-          <button className="btn-outline" onClick={() => setConfirmOpen(false)}>
-            CANCEL
-          </button>
-          <button
-            className="stopDialog__confirm"
-            onClick={() => {
-              killSwitch()
-              setConfirmOpen(false)
-            }}
-          >
-            REVOKE ACCESS NOW
-          </button>
-        </div>
-      </Dialog>
     </AppShell>
   )
 }

@@ -1,18 +1,21 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react'
-import type { AgentEvent, Mandate, Position } from '../lib/types'
+import { DEFAULT_MANDATE, type AgentEvent, type Mandate, type Position } from '../lib/types'
 
 /**
- * Agent state: the mandate, deployed positions and the event log.
+ * Local state: the mandate, deployed positions and the event log.
+ *
  * Persisted to localStorage so a reload never loses a user's mandate — this is
  * the one thing they spent real thought on.
+ *
+ * There is deliberately no paused or stopped state here. Nothing runs when the
+ * tab is closed and this app never holds a key, so a flag claiming to have
+ * halted something would be describing a machine that does not exist.
  */
 
 type State = {
   mandate: Mandate | null
   positions: Position[]
   events: AgentEvent[]
-  agentPaused: boolean
-  killSwitchAt: number | null
   hydrated: boolean
 }
 
@@ -24,18 +27,50 @@ type Action =
   | { type: 'closePosition'; id: string }
   | { type: 'resolveEvent'; id: string; outcome: 'executed' | 'skipped' }
   | { type: 'addEvent'; event: AgentEvent }
-  | { type: 'setPaused'; paused: boolean }
-  | { type: 'killSwitch' }
 
-const STORAGE_KEY = 'saji.agent.v1'
-const LEGACY_STORAGE_KEY = 'kaji.agent.v1'
+const STORAGE_KEY = 'ponsaji.agent.v1'
+/** Every name this app has shipped under, newest first. A rebrand must not
+    silently discard a mandate somebody sat and thought about. */
+const LEGACY_STORAGE_KEYS = ['ponsaji.agent.v1', 'kaji.agent.v1']
+
+/**
+ * Brings a stored mandate up to the current shape.
+ *
+ * A mandate is the one thing a user spent real thought on, so an older one is
+ * migrated rather than discarded. Fields that did not exist when it was written
+ * take the current defaults, and the single `base_asset` becomes the set it
+ * always meant.
+ */
+function migrateMandate(raw: unknown): Mandate | null {
+  if (!raw || typeof raw !== 'object') return null
+  const m = raw as Partial<Mandate> & { base_asset?: string }
+
+  const base_assets =
+    Array.isArray(m.base_assets) && m.base_assets.length > 0
+      ? m.base_assets
+      : m.base_asset
+        ? [m.base_asset]
+        : DEFAULT_MANDATE.base_assets
+
+  return {
+    ...DEFAULT_MANDATE,
+    ...m,
+    base_assets,
+    max_round_trip_bps: m.max_round_trip_bps ?? DEFAULT_MANDATE.max_round_trip_bps,
+    max_breakeven_days: m.max_breakeven_days ?? DEFAULT_MANDATE.max_breakeven_days,
+    protocol_allowlist:
+      Array.isArray(m.protocol_allowlist) && m.protocol_allowlist.length > 0
+        ? // Older mandates predate the distribution venues; authorising only
+          // what they listed would silently block every new row.
+          [...new Set([...m.protocol_allowlist, ...DEFAULT_MANDATE.protocol_allowlist])]
+        : DEFAULT_MANDATE.protocol_allowlist,
+  }
+}
 
 const initialState: State = {
   mandate: null,
   positions: [],
   events: [],
-  agentPaused: false,
-  killSwitchAt: null,
   hydrated: false,
 }
 
@@ -47,7 +82,7 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         mandate: action.mandate,
-        events: [event('executed', 'Mandate updated', 'Constraints recompiled and applied to the policy engine.'), ...state.events],
+        events: [event('executed', 'Mandate updated', 'Limits applied. Every row is re-checked against them on the next read.'), ...state.events],
       }
     case 'clearMandate':
       return { ...state, mandate: null }
@@ -79,32 +114,6 @@ function reducer(state: State, action: Action): State {
       }
     case 'addEvent':
       return { ...state, events: [action.event, ...state.events].slice(0, 40) }
-    case 'setPaused':
-      return {
-        ...state,
-        agentPaused: action.paused,
-        events: [
-          event(
-            action.paused ? 'paused' : 'executed',
-            action.paused ? 'Agent paused' : 'Agent resumed',
-            action.paused
-              ? 'No further actions will be prepared until you resume.'
-              : 'Monitoring resumed under the current mandate.',
-          ),
-          ...state.events,
-        ],
-      }
-    case 'killSwitch':
-      return {
-        ...state,
-        agentPaused: true,
-        killSwitchAt: Date.now(),
-        positions: state.positions.map((p) => (p.status === 'active' ? { ...p, status: 'paused' } : p)),
-        events: [
-          event('paused', 'Emergency stop engaged', 'Session access revoked. All positions held, no actions prepared.'),
-          ...state.events,
-        ],
-      }
     default:
       return state
   }
@@ -120,8 +129,6 @@ type Store = State & {
   addPosition: (p: Position) => void
   closePosition: (id: string) => void
   resolveEvent: (id: string, outcome: 'executed' | 'skipped') => void
-  setPaused: (paused: boolean) => void
-  killSwitch: () => void
   totalCapital: number
   blendedCarry: number
 }
@@ -133,8 +140,9 @@ export function AgentProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
-      dispatch({ type: 'hydrate', state: raw ? (JSON.parse(raw) as Partial<State>) : {} })
+      const raw = LEGACY_STORAGE_KEYS.reduce<string | null>((found, key) => found ?? localStorage.getItem(key), localStorage.getItem(STORAGE_KEY))
+      const parsed = raw ? (JSON.parse(raw) as Partial<State>) : {}
+      dispatch({ type: 'hydrate', state: { ...parsed, mandate: migrateMandate(parsed.mandate) } })
     } catch {
       dispatch({ type: 'hydrate', state: {} })
     }
@@ -165,8 +173,6 @@ export function AgentProvider({ children }: { children: ReactNode }) {
       addPosition: (position) => dispatch({ type: 'addPosition', position }),
       closePosition: (id) => dispatch({ type: 'closePosition', id }),
       resolveEvent: (id, outcome) => dispatch({ type: 'resolveEvent', id, outcome }),
-      setPaused: (paused) => dispatch({ type: 'setPaused', paused }),
-      killSwitch: () => dispatch({ type: 'killSwitch' }),
     }
   }, [state])
 

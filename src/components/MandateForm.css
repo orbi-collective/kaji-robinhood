@@ -1,146 +1,5 @@
-.mandatePage__plate {
-  z-index: -3;
-}
-
-.mandatePage__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background: linear-gradient(
-    90deg,
-    rgba(6, 7, 6, 0.98) 0%,
-    rgba(6, 7, 6, 0.93) 44%,
-    rgba(6, 7, 6, 0.3) 64%,
-    rgba(6, 7, 6, 0.06) 100%
-  );
-  pointer-events: none;
-}
-
-/* ---------- machine overlays ---------- */
-
-.controlPlaque {
-  position: absolute;
-  left: 64%;
-  top: 16%;
-  width: 13%;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.controlPlaque__id {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(24px, 3vw, 48px);
-  color: #b9bdb6;
-  letter-spacing: 0.06em;
-  line-height: 1;
-}
-
-.controlPlaque__sub {
-  font-family: var(--font-mono);
-  font-size: clamp(7px, 0.75vw, 12px);
-  letter-spacing: 0.3em;
-  color: #9d9f99;
-}
-
-.controlPlaque__meta {
-  margin-top: 10px;
-  font-family: var(--font-mono);
-  font-size: clamp(6px, 0.52vw, 9px);
-  letter-spacing: 0.16em;
-  color: #7b7e78;
-  line-height: 1.8;
-}
-
-.systemStatus {
-  position: absolute;
-  right: 4%;
-  top: 14%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.systemStatus__value {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(22px, 2.4vw, 38px);
-  color: var(--signal-lime);
-  letter-spacing: 0.06em;
-}
-
-.systemStatus__value--warn {
-  color: var(--warning-amber);
-}
-
-.allowlistPanel {
-  position: absolute;
-  left: 61%;
-  top: 41%;
-  width: 19%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 1;
-}
-
-.allowlistPanel__title {
-  font-size: clamp(7px, 0.65vw, 11px);
-}
-
-.allowlistPanel__select {
-  border: 1px solid rgba(174, 178, 170, 0.45);
-  background: rgba(10, 12, 10, 0.88);
-  color: var(--chalk);
-  font-family: var(--font-body);
-  font-size: clamp(10px, 0.85vw, 14px);
-  padding: 10px 14px;
-}
-
-.allowlistPanel__ok {
-  border: 1px solid rgba(174, 178, 170, 0.3);
-  background: rgba(10, 12, 10, 0.8);
-  padding: 9px 14px;
-  font-family: var(--font-mono);
-  font-size: clamp(7px, 0.62vw, 10px);
-  letter-spacing: 0.12em;
-  color: var(--steel-light);
-  display: flex;
-  justify-content: space-between;
-}
-
-.allowlistPanel__ok--warn {
-  color: var(--warning-amber);
-  border-color: rgba(211, 138, 40, 0.5);
-}
-
-/* ---------- form column ---------- */
-
-.mandatePage__content {
-  padding: 32px 48px 64px;
-  max-width: 54%;
-}
-
-.mandatePage__h1 {
-  font-size: clamp(44px, 5.4vw, 76px);
-  text-transform: uppercase;
-  text-wrap: balance;
-}
-
-.mandatePage__sub {
-  color: var(--steel-light);
-  margin: 20px 0 32px;
-  max-width: 58ch;
-  line-height: 1.55;
-  font-size: 15px;
-  text-wrap: pretty;
-}
+/* The limits form. Lives inside the scanner, so it carries no page
+   chrome of its own — only the controls. */
 
 .limitForm {
   display: flex;
@@ -270,7 +129,7 @@ select.limitRow__unit {
   color: var(--fault-red);
 }
 
-.mandatePage__formError {
+.limitForm__error {
   margin: 16px 0 0;
   padding: 12px 16px;
   border: 1px solid rgba(255, 75, 67, 0.5);
@@ -280,14 +139,14 @@ select.limitRow__unit {
   font-size: 12px;
 }
 
-.mandatePage__actions {
+.limitForm__actions {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 16px;
   margin-top: 24px;
 }
 
-.mandatePage__simulate {
+.limitForm__submit {
   font-family: var(--font-display);
   font-size: 23px;
   font-weight: 800;
@@ -295,16 +154,6 @@ select.limitRow__unit {
 }
 
 @media (max-width: 1100px) {
-  .mandatePage__content {
-    max-width: 100%;
-    padding: 28px 20px 56px;
-  }
-
-  .controlPlaque,
-  .systemStatus,
-  .allowlistPanel {
-    display: none;
-  }
 
   .limitRow {
     grid-template-columns: 44px 1fr;
@@ -326,7 +175,59 @@ select.limitRow__unit {
     padding-left: 0;
   }
 
-  .mandatePage__actions {
+  .limitForm__actions {
     grid-template-columns: 1fr;
   }
+}
+
+/* ---------- settlement asset toggles ---------- */
+
+/* A mandate authorises a set of assets, so the control is a set of switches
+   rather than a dropdown that can only ever hold one answer. */
+.assetToggles {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.assetToggle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 8px 14px;
+  min-height: 38px;
+  border: 1px solid var(--steel-border);
+  background: var(--machine-black);
+  color: var(--steel);
+  transition:
+    color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.assetToggle:hover {
+  color: var(--chalk);
+  border-color: var(--steel);
+}
+
+.assetToggle--on {
+  color: var(--foundry-black);
+  background: var(--signal-lime);
+  border-color: var(--signal-lime);
+}
+
+.assetToggle--on:hover {
+  color: var(--foundry-black);
+  filter: brightness(1.08);
+}
+
+.limitRow__unit--static {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--steel-light);
+  padding: 0 12px;
 }

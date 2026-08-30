@@ -110,7 +110,13 @@ export function Dialog({
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    if (open && !el.open) el.showModal()
+    if (open && !el.open) {
+      el.showModal()
+      // showModal focuses the first control, but a tall dialog can still open
+      // scrolled past it — you land typing in a field that is off-screen above.
+      // A panel opens at its beginning.
+      el.scrollTop = 0
+    }
     if (!open && el.open) el.close()
   }, [open])
 

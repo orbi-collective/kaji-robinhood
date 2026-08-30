@@ -1,0 +1,190 @@
+# PONSAJI
+
+> A measuring instrument for Robinhood Chain (chain id 4663). PONSAJI prices two
+> classes of stablecoin position against each other — ERC-4626 vaults, where
+> capital compounds, and fee-distribution tokens, where capital buys a share of
+> somebody else's trading volume — and refuses to prepare anything that breaks
+> a mandate you set.
+
+PONSAJI is non-custodial. It never holds funds, never signs, and has no background
+process. Your wallet is the only signer.
+
+## What makes it different
+
+Both fee-distribution protocols on this chain advertise what they pay. Neither
+shows what a position costs to enter and exit, how fast the payout is decaying,
+or how long capital must sit before the income has repaid the round trip. PONSAJI
+computes that, states it under three volume regimes, and blocks the position
+when it fails your mandate.
+
+## The equations
+
+Net carry, for a vault position:
+
+    net = lending_yield + funding_income + incentive_value
+        − borrow_cost − hedge_cost − protocol_fees
+        − estimated_slippage − annualized_gas_cost
+
+Round trip, for a distribution position:
+
+    round_trip = entry_fee + exit_fee + price_impact(both legs) + gas(2 actions)
+
+Income. For a pro-rata distribution the cycle total cancels out of the income
+equation, so one recipient's payout divided by their balance is the whole
+answer — which is why PONSAJI samples five real payouts instead of summing a
+cycle of several thousand:
+
+    payout_per_token = payout_to_recipient / recipient_balance
+    income_per_day   = payout_per_token × tokens_held
+                     × payout_asset_price × leg_count × cycles_per_day
+
+Break-even, under a weekly decay factor r:
+
+    k     = ln(r) / 7
+    days  = ln(1 + cost·k / income_per_day) / k
+
+When the decaying series converges below the cost, the position never repays and
+PONSAJI reports NEVER rather than a large number that looks like a long wait.
+
+## Data sources
+
+- Fees: read from the contract that charges them (`FEE_BPS`, `currentFeeBps`).
+- Cadence: read from the distributor (`interval`, `nextDistribution`).
+- Payouts: Transfer logs of a live cycle, sampled and checked for pro-rata.
+- Prices: Uniswap v4 `extsload` on the pool the asset actually trades in,
+  and Chainlink for ETH/USD.
+- Vault state: `asset`, `totalAssets`, `balanceOf`, `convertToAssets` onchain.
+- Forward vault APY: Morpho's public GraphQL API. Unavailable → the row is
+  labelled DEMO rather than shown with an invented yield.
+
+## Rules PONSAJI holds itself to
+
+- A number is measured or it is null. No default fee, no assumed cadence, no
+  stand-in price.
+- "Unknown" never renders as a confident value. A failed read and a genuine
+  zero are always distinguished.
+- No annualised headline is published for a decaying series.
+- Claims are checked, not repeated: the pro-rata claim is verified against
+  sampled recipients.
+
+## Known limits
+
+- PONSAJI has no background process. Nothing is monitored while the tab is closed.
+- One payout leg is measured and scaled by the leg count each venue states it
+  splits its basket across. That scaling is a documented claim, not a
+  measurement, and is labelled as such wherever it appears.
+- The public RPC intermittently returns a malformed CORS header, which the
+  browser rejects. Affected reads degrade and say so.
+- Balances are sampled at read time, not as of the cycle, so pro-rata agreement
+  is a tight cluster rather than an exact match.
+
+## Full documentation
+
+- /llms-full.txt — every mechanic, source, and limit in one file
+
+---
+
+# Full reference
+
+## Venues PONSAJI prices
+
+### Vaults (kind: vault)
+
+Morpho Vault V2, ERC-4626, USDG on Robinhood Chain.
+
+| Recipe | Vault | Address |
+|---|---|---|
+| Steady Press | Steakhouse USDG | 0xBeEff033F34C046626B8D0A041844C5d1A5409dd |
+| Carry Alloy | Ethena x Steakhouse USDG | 0xbEeFF0fb1Dc19344A87b8479dAb60A2e16160737 |
+| Neutral Beam | Purinta USDG | 0x37788ff0c1d4e45A7FE06BC7e71e0cc00121d0A8 |
+
+Note on `maxWithdraw`: these Vault V2 deployments return 0 for every holder PONSAJI
+has read. That is the contract declining to expose an instant exit, not a
+statement about the depositor's money. PONSAJI reports it as such and takes exit
+depth from a separate source.
+
+### Fee-distribution tokens (kind: distribution)
+
+**The Index — $INDEX**
+- Token: 0x56910D4409F3a0C78C64DD8D0545FF0705389870
+- Fee hook: 0x2cD91bD228ff4c537031d6b8204782090c84c0cC (`FEE_BPS` = 300)
+- Distributor: 0x39ADB8acD07427D338b5f1AfAb436A04AbFdB7c4 (`interval` = 3600)
+- Pool: native ETH quote, 1% tier, tick spacing 200, hook attached
+- Pays plain token holders, pro-rata, hourly, in 18 tokenized stocks.
+
+**Quotrons — $QUOTRON**
+- Token: 0x5a86828Efd322bfb16d93cFeD16EE9BC14940D7F
+- Quoter: 0xb8960fdC8A0Be155d196C2795b75747763562df2
+- Does NOT pay plain token holders. Rewards accrue to "hardwired" terminals —
+  NFTs created by irreversibly burning the token. Holding $QUOTRON alone earns
+  nothing. PONSAJI states this rather than computing a break-even that would imply
+  otherwise.
+
+## The mandate
+
+Typed constraints compiled into the policy engine.
+
+| Field | Meaning |
+|---|---|
+| capital_usd | Most PONSAJI may commit across all open positions, not per action |
+| base_assets | Settlement assets authorised, as a set |
+| max_drawdown_bps | Simulated drawdown ceiling |
+| max_slippage_bps | Order slippage ceiling |
+| min_exit_liquidity_usd | Exit depth floor |
+| max_round_trip_bps | Entry fee + exit fee ceiling |
+| max_breakeven_days | Longest a position may take to repay its own cost |
+| allow_leverage | Borrowed exposure permitted |
+| approval_mode | manual only; session keys are not deployed |
+| protocol_allowlist | Venues that may be interacted with |
+
+## Policy checks
+
+Each returns pass / review / block. The worst verdict governs.
+
+| id | Blocks when |
+|---|---|
+| protocol_allowlist | A venue is not on the allowlist |
+| base_asset | The recipe settles in an unauthorised asset |
+| exit_liquidity | Exit depth is below the mandate floor |
+| slippage | Projected slippage exceeds the ceiling |
+| drawdown | Simulated drawdown exceeds the ceiling (review) |
+| leverage | The recipe needs leverage the mandate disallows |
+| oracle_freshness | A feed is past its publisher heartbeat. A venue with no oracle returns review, never pass — absence of a guarantee is not a guarantee |
+| spend_cap | This allocation plus deployed capital exceeds the cap |
+| round_trip_cost | Entry + exit fees exceed the ceiling |
+| breakeven_horizon | The position never repays, or takes longer than allowed. Unmeasured returns review, never pass |
+| simulation | The transaction simulation flagged something (review) |
+
+## Decay regimes
+
+Break-even is never quoted as one number.
+
+| Regime | Weekly retention | Why |
+|---|---|---|
+| FLAT | 1.0 | Optimistic bound. Ruled out by observed cycles |
+| −50% / WEEK | 0.5 | Moderate reading of observed decay |
+| −90% / WEEK | 0.1 | Near the pace actually observed |
+
+Observed basis: The Index's own published distribution table showed NVDA per
+cycle falling 3.26 → 0.90 → 0.85 → 0.46 → 0.22 → 0.09 across six consecutive
+hourly cycles on 26–27 August 2026 — a 97% fall in five hours. Quotrons states
+in its own risk section that early per-terminal rates are not representative.
+
+## Errors
+
+| Condition | What it means | What to do |
+|---|---|---|
+| Row labelled DEMO | A live read failed for that venue | Rescan; check the RPC |
+| "could not be read from this endpoint" | The public RPC returned a malformed CORS header | Retry; it is intermittent |
+| Break-even "not measured" | No live payout could be sampled | Reload the recipe |
+| Break-even NEVER | Under that regime, income never repays the round trip | Not an error |
+| maxWithdraw NOT REPORTED | The call reverted | Distinguish from a genuine 0 |
+| "Holding this token pays nothing" | The venue pays NFTs, not holders | Read the venue's own docs |
+| Policy BLOCKED | A hard bound was breached | Widen the mandate, or do not take it |
+
+## Disclaimer
+
+Estimates are informational and do not guarantee returns. Onchain strategies
+involve loss, liquidity, oracle and smart-contract risk. Tokenized stocks are
+issued by third parties on upgradeable contracts, and that risk passes through
+to anything denominated in them. Nothing here is financial advice.

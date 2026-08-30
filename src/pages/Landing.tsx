@@ -1,296 +1,321 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { fetchOpportunities } from '../lib/adapters'
 import ScenePlate from '../components/ScenePlate'
 import TopNav from '../components/TopNav'
-import IssuePlate from '../components/IssuePlate'
-import { SourceTag } from '../components/ui'
-import { Sparkline, Bars } from '../components/Sparkline'
+import Footer from '../components/Footer'
+import { useWalletGate } from '../components/Wallet'
+import { explorerAddress } from '../lib/chain'
+import { relativeTime } from '../components/ui'
+import { fetchOpportunities } from '../lib/adapters'
+import { readPriceFeed } from '../lib/feeds'
+import {
+  isLaunched,
+  projectPayroll,
+  readDistributionHistory,
+  readPayoutAssetPriceUsd,
+  PONSAJI_TOKEN,
+} from '../lib/ponsajiToken'
 import './Landing.css'
 
-const STRESS_TESTS = [
-  { name: 'LIQUIDITY −50%', response: 'REDUCE POSITION', tone: 'amber' },
-  { name: 'FUNDING REVERSAL', response: 'REQUEST APPROVAL', tone: 'amber' },
-  { name: 'ORACLE STALE', response: 'STOP', tone: 'red' },
-  { name: 'SLIPPAGE BREACH', response: 'STOP', tone: 'red' },
-  { name: 'PROTOCOL PAUSE', response: 'STOP', tone: 'red' },
-]
+/**
+ * The landing page, and the product's front door.
+ *
+ * The token is the product; the scanner is the instrument that gives it its
+ * credibility. So this page leads with what a holder gets and how, and treats
+ * the measuring apparatus as the evidence rather than the offer.
+ *
+ * It follows the shape the incumbents use — a claim, a headline figure, the
+ * last distribution, then the terms — because that shape is what a reader of
+ * this meta already knows how to scan. Everything inside it is held to PONSAJI's
+ * own standard: no figure appears that has not been read, and the pre-launch
+ * state says so rather than showing a zero dressed as a result.
+ */
+
+const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString('en-US')}` : `$${n.toFixed(2)}`)
+const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
 
 export default function Landing() {
-  const { data: opportunities } = useQuery({
+  const { address } = useWalletGate()
+
+  const { data: state } = useQuery({
+    queryKey: ['payroll'],
+    queryFn: async ({ signal }) => {
+      const eth = await readPriceFeed('ETH_USD').catch(() => null)
+      return projectPayroll(eth?.price ?? null, signal)
+    },
+    enabled: isLaunched(),
+    staleTime: 30_000,
+  })
+
+  // The scanner's own readings, used here as evidence rather than as a feature
+  // list: the cost of every rival is a measurement this product already makes.
+  const { data: venues } = useQuery({
     queryKey: ['opportunities'],
     queryFn: ({ signal }) => fetchOpportunities(signal),
   })
-  // The rail advertises the single best-ranked recipe, never an aggregate that
-  // no user could actually take.
-  const best = opportunities?.[0]
+
+  // A live reading that exists even before the token does: what a holder will
+  // be paid in, priced from its own pool.
+  const { data: payoutPrice } = useQuery({
+    queryKey: ['payout-price'],
+    queryFn: () => readPayoutAssetPriceUsd(),
+    staleTime: 60_000,
+  })
+
+  const rivals = useMemo(() => (venues ?? []).filter((v) => v.distribution), [venues])
+
+  // What the account has actually sent, read from the chain rather than from a
+  // tally this site keeps for itself.
+  const { data: history } = useQuery({
+    queryKey: ['distribution-history'],
+    queryFn: ({ signal }) => readDistributionHistory(72, signal),
+    staleTime: 120_000,
+  })
+
+  const mine = useMemo(
+    () => state?.projected?.records.find((r) => r.wallet.toLowerCase() === address?.toLowerCase()) ?? null,
+    [state, address],
+  )
+
 
   return (
-    <div className="landing">
-      {/* ---------- Fold 1: full-video foundry hero ---------- */}
-      <section className="foundryHero">
-        <ScenePlate scene="kaji-foundry" mobileScene="kaji-foundry-mobile" className="foundryHero__plate" />
-        <div className="foundryHero__scrim" aria-hidden="true" />
+    <div className="tokenLanding">
+      <a className="skipLink" href="#main">
+        Skip to content
+      </a>
 
-        <TopNav variant="landing" />
+      <main id="main" className="tokenLanding__main">
+        {/* ---------- Hero: the foundry plate, with the token's claim over it ---------- */}
+        <section className="foundryHero">
+          <ScenePlate scene="kaji-foundry" mobileScene="kaji-foundry-mobile" className="foundryHero__plate" />
+          <div className="foundryHero__scrim" aria-hidden="true" />
 
-        <div className="foundryHero__copy">
-          <h1 className="display-h1 foundryHero__h1">
-            FORGE THE
-            <br />
-            CLEANEST CARRY.
-            <span className="lime-square" aria-hidden="true" />
-          </h1>
-          <p className="foundryHero__body">Measured carry, served with every input visible.</p>
-          <div className="foundryHero__ctas">
-            <Link to="/opportunities" className="btn-lime foundryHero__cta">
-              OPEN THE FOUNDRY <span aria-hidden="true">→</span>
-            </Link>
-            <Link to="/recipes/carry-alloy" className="btn-outline foundryHero__cta2">
-              INSPECT A RECIPE
-            </Link>
-          </div>
+          <TopNav variant="landing" />
 
-          {/* Token issue plate. Both fields flip to live by passing `value`. */}
-          <IssuePlate fields={[{ label: 'CA' }, { label: 'Buy' }]} />
-        </div>
+          <div className="hero__copy">
+            <span className="mono-label hero__eyebrow">
+              {PONSAJI_TOKEN.symbol} · ROBINHOOD CHAIN
+            </span>
+            <h1 className="hero__h1">
+              Hold {PONSAJI_TOKEN.symbol}.
+              <br />
+              Earn stocks<span className="lime-period">.</span>
+            </h1>
+            <p className="hero__sub">
+              Trading fees buy {PONSAJI_TOKEN.payoutAsset.symbol} and it is paid out to holders. Every venue like this
+              pays on a snapshot of who held at one instant — so a wallet can buy seconds before it, take a full share,
+              and sell. <strong>This one pays for time actually held.</strong>
+            </p>
 
-        <div className="instrumentRail" role="list" aria-label="Live foundry instruments">
-          <div className="instrumentRail__cell" role="listitem">
-            <span className="mono-label">BEST EST. NET CARRY</span>
-            <div className="instrumentRail__row">
-              <span className="instrumentRail__value">{best ? `${(best.estimated_net_carry * 100).toFixed(2)}%` : '—'}</span>
-              <Sparkline points={best?.trace ?? [3, 4, 3.6, 5, 4.6, 5.4, 5, 6.4, 6, 7.4]} />
-            </div>
-          </div>
-          <div className="instrumentRail__cell" role="listitem">
-            <span className="mono-label">ITS RISK SCORE</span>
-            <div className="instrumentRail__row">
-              <span className="instrumentRail__value">
-                {best?.risk_score ?? '—'}
-                <span className="instrumentRail__sub"> / 100</span>
-              </span>
-              <Sparkline points={[3, 3.6, 3.2, 4.4, 4, 5, 4.4, 5.6, 5.2, 6]} />
-            </div>
-          </div>
-          <div className="instrumentRail__cell" role="listitem">
-            <span className="mono-label">RECIPES SCANNED</span>
-            <div className="instrumentRail__row">
-              <span className="instrumentRail__value">{opportunities?.length ?? '—'}</span>
-              <Bars values={[2, 3, 2, 4, 3, 5, 4, 3, 5, 4, 6, 5, 4, 6, 5, 7]} />
-            </div>
-          </div>
-          <div className="instrumentRail__cell" role="listitem">
-            <span className="mono-label">DATA SOURCE</span>
-            <div className="instrumentRail__row">
-              <span className="instrumentRail__value instrumentRail__value--source">
-                {best ? (best.source === 'live' ? 'LIVE' : 'DEMO') : '—'}
-              </span>
-              <span className="instrumentRail__pulse" aria-hidden="true" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- Fold 2: material ledger ---------- */}
-      <section className="fold fold--ledger">
-        <h2 className="display-h1 fold__h2">
-          EVERY OUTPUT SHOWS ITS INPUTS.
-          <span className="lime-square" aria-hidden="true" />
-        </h2>
-        <p className="fold__intro">
-          SAJI prices a strategy the way a foundry prices a casting: every raw input, every cost, on one ledger.
-        </p>
-        <div className="ledger" role="table" aria-label="Material ledger">
-          <div className="ledger__row ledger__row--head" role="row">
-            {['ASSET / VENUE', 'GROSS YIELD', 'BORROW COST', 'HEDGE COST', 'LIQUIDITY', 'ORACLE AGE', 'NET ESTIMATE'].map(
-              (h) => (
-                <span key={h} role="columnheader" className="mono-label">
-                  {h}
+            <div className="hero__ctas">
+              {isLaunched() ? (
+                <a className="btn-lime hero__buy" href="https://ponslaunchpad.com" target="_blank" rel="noopener noreferrer">
+                  BUY ${PONSAJI_TOKEN.symbol} <span aria-hidden="true">→</span>
+                </a>
+              ) : (
+                <span className="hero__buy hero__buy--pending">
+                  <span className="hero__pendingDot" aria-hidden="true" />
+                  NOT DEPLOYED YET
                 </span>
-              ),
+              )}
+              <a className="btn-outline" href="#how">
+                HOW IT WORKS
+              </a>
+            </div>
+          </div>
+
+          {/* ---------- The headline card ---------- */}
+          <div className="board board--hero">
+            <div className="board__head">
+              <span className="mono-label">THE ACCOUNT</span>
+              <span className={`board__state ${isLaunched() ? 'board__state--live' : ''}`}>
+                {isLaunched() ? 'LIVE' : 'PRE-LAUNCH'}
+              </span>
+            </div>
+
+            {isLaunched() ? (
+              <>
+                <div className="board__headline">
+                  <span className="mono-label">IN THE ACCOUNT, TO BE DIVIDED</span>
+                  <span className="board__big">
+                    {state?.account ? `${state.account.units.toFixed(4)}` : '—'}
+                    <span className="board__unit"> {PONSAJI_TOKEN.payoutAsset.symbol}</span>
+                  </span>
+                  <span className="board__sub">
+                    {state?.accountUsd != null ? usd(state.accountUsd) : 'not priced'}
+                    {PONSAJI_TOKEN.payrollAccount && (
+                      <>
+                        {' · '}
+                        <a href={explorerAddress(PONSAJI_TOKEN.payrollAccount)} target="_blank" rel="noopener noreferrer">
+                          {short(PONSAJI_TOKEN.payrollAccount)} ↗
+                        </a>
+                      </>
+                    )}
+                  </span>
+                </div>
+                <div className="board__grid">
+                  <div>
+                    <span className="mono-label">ON THE LEDGER</span>
+                    <span className="board__cell">{state?.projected?.records.length ?? '—'}</span>
+                  </div>
+                  <div>
+                    <span className="mono-label">CYCLE</span>
+                    <span className="board__cell">{state?.cycle ? `#${state.cycle.index}` : '—'}</span>
+                  </div>
+                  <div>
+                    <span className="mono-label">PAID IN</span>
+                    <span className="board__cell">{PONSAJI_TOKEN.payoutAsset.symbol}</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="board__headline">
+                  <span className="mono-label">NOTHING DISTRIBUTED YET</span>
+                  <span className="board__big board__big--muted">
+                    0<span className="board__unit"> {PONSAJI_TOKEN.payoutAsset.symbol}</span>
+                  </span>
+                  <span className="board__sub">
+                    The token is not deployed. There is no account, no ledger and nothing to divide — so this reads zero
+                    rather than borrowing a number from somewhere else.
+                  </span>
+                </div>
+                <div className="board__grid">
+                  <div>
+                    <span className="mono-label">MECHANIC</span>
+                    <span className="board__cell board__cell--sm">Service integral</span>
+                  </div>
+                  <div>
+                    <span className="mono-label">CYCLE</span>
+                    <span className="board__cell board__cell--sm">
+                      {PONSAJI_TOKEN.cycleMinMinutes}–{PONSAJI_TOKEN.cycleMaxMinutes} min, seeded
+                    </span>
+                  </div>
+                  <div>
+                    <span className="mono-label">PAID IN</span>
+                    <span className="board__cell board__cell--sm">{PONSAJI_TOKEN.payoutAsset.symbol}</span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {mine && (
+              <div className="board__mine">
+                <span className="mono-label">YOUR SERVICE</span>
+                <div className="board__mineRow">
+                  <span>{mine.balance.toLocaleString('en-US', { maximumFractionDigits: 0 })} {PONSAJI_TOKEN.symbol}</span>
+                  <span>{mine.minutesHeld.toFixed(0)} min unbroken</span>
+                  <span className="board__mineShare">{(mine.share * 100).toFixed(3)}% of the next run</span>
+                </div>
+              </div>
             )}
           </div>
-          {(opportunities ?? []).map((o) => (
-            <div key={o.recipe_id} className="ledger__row" role="row">
-              <span className="ledger__venue" role="cell">
-                {o.inputs.base_asset} / {o.inputs.lending_venue.toUpperCase()}
-                {o.inputs.hedge_venue ? ` + ${o.inputs.hedge_venue.toUpperCase()}` : ''}
-              </span>
-              <span role="cell">{(o.gross_apy * 100).toFixed(2)}%</span>
-              <span role="cell" className="ledger__cost">
-                {o.breakdown.borrow_cost ? `−${(o.breakdown.borrow_cost * 100).toFixed(2)}%` : '—'}
-              </span>
-              <span role="cell" className="ledger__cost">
-                {o.breakdown.hedge_cost ? `−${(o.breakdown.hedge_cost * 100).toFixed(2)}%` : '—'}
-              </span>
-              <span role="cell">
-                {o.exit_liquidity_usd >= 1e6
-                  ? `$${(o.exit_liquidity_usd / 1e6).toFixed(1)}M`
-                  : `$${Math.round(o.exit_liquidity_usd / 1000)}K`}
-              </span>
-              <span role="cell">{o.oracle_age_seconds}s</span>
-              <span role="cell" className="ledger__net">
-                {(o.estimated_net_carry * 100).toFixed(2)}%
-              </span>
-            </div>
-          ))}
-        </div>
-        <p className="fold__disclosure">
-          Read from the same adapters the scanner uses. Every number is an estimate, not a promise.
-        </p>
-      </section>
 
-      {/* ---------- Fold 3: assembly line ---------- */}
-      <section className="fold fold--line">
-        <h2 className="display-h1 fold__h2">
-          THE AGENT REASONS. THE POLICY ENGINE DECIDES.
-          <span className="lime-square" aria-hidden="true" />
-        </h2>
-        <div className="assemblyLine" aria-label="SAJI agent pipeline">
-          {['SCAN', 'ASSEMBLE', 'SIMULATE', 'VALIDATE', 'PREPARE'].map((step, i) => (
-            <div key={step} className="assemblyLine__station">
-              <span className="assemblyLine__index mono-label">{String(i + 1).padStart(2, '0')}</span>
-              <span className="assemblyLine__name">{step}</span>
-              <span className="assemblyLine__desc mono-label">
-                {
-                  [
-                    'RAW PROTOCOL + MARKET INPUTS',
-                    'CANDIDATE RECIPES',
-                    'NET CARRY / LIQUIDITY / DRAWDOWN',
-                    'CAPS · ORACLE · SLIPPAGE · ALLOWLIST',
-                    'TX PREVIEW · MANUAL APPROVAL',
-                  ][i]
-                }
-              </span>
-            </div>
-          ))}
-          <div className="assemblyLine__belt" aria-hidden="true" />
-        </div>
-      </section>
-
-      {/* ---------- Fold 4: strategy recipes ---------- */}
-      <section className="fold fold--recipes">
-        <h2 className="display-h1 fold__h2">
-          STRATEGY RECIPES.
-          <span className="lime-square" aria-hidden="true" />
-        </h2>
-        <div className="recipeSheets">
-          {(opportunities ?? []).map((r) => (
-            <article key={r.recipe_id} className="recipeSheet">
-              <header className="recipeSheet__head">
-                <h3 className="recipeSheet__name">{r.name}</h3>
-                <SourceTag source={r.source} />
-              </header>
-              <div className="recipeSheet__carry">
-                <span className="mono-label">EST. NET CARRY</span>
-                <span className="recipeSheet__carryValue">{(r.estimated_net_carry * 100).toFixed(2)}%</span>
+          {/* Every reading on this rail is one this build actually took. The
+              status cell is the one thing that is true before anything trades. */}
+          <div className="instrumentRail" role="list" aria-label="Live readings">
+            <div className="instrumentRail__cell" role="listitem">
+              <span className="mono-label">STATUS</span>
+              <div className="instrumentRail__row">
+                <span className={`instrumentRail__value ${isLaunched() ? '' : 'instrumentRail__value--source'}`}>
+                  {isLaunched() ? 'LIVE' : 'PRE-LAUNCH'}
+                </span>
+                {isLaunched() && <span className="instrumentRail__pulse" aria-hidden="true" />}
               </div>
-              <dl className="recipeSheet__specs">
-                <div>
-                  <dt className="mono-label">RISK SCORE</dt>
-                  <dd>{r.risk_score} / 100</dd>
-                </div>
-                <div>
-                  <dt className="mono-label">EXIT LIQUIDITY</dt>
-                  <dd>
-                    {r.exit_liquidity_usd >= 1e6
-                      ? `$${(r.exit_liquidity_usd / 1e6).toFixed(1)}M`
-                      : `$${Math.round(r.exit_liquidity_usd / 1000)}K`}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="mono-label">ORACLE AGE</dt>
-                  <dd>{r.oracle_age_seconds}s</dd>
-                </div>
-                <div>
-                  <dt className="mono-label">APPROVAL</dt>
-                  <dd>MANUAL</dd>
-                </div>
-              </dl>
-              <div className="recipeSheet__mix" aria-label="Ingredient allocation">
-                {r.ingredients.map((ing) => (
-                  <div key={ing.label} className="recipeSheet__ingredient">
-                    <span className="mono-label">{ing.label}</span>
-                    <div className="recipeSheet__bar">
-                      <div className="recipeSheet__barFill" style={{ width: `${ing.weight}%` }} />
-                    </div>
-                    <span className="recipeSheet__pct">{ing.weight}%</span>
-                  </div>
-                ))}
+            </div>
+            <div className="instrumentRail__cell" role="listitem">
+              <span className="mono-label">PAID IN</span>
+              <div className="instrumentRail__row">
+                <span className="instrumentRail__value">{PONSAJI_TOKEN.payoutAsset.symbol}</span>
+                <span className="instrumentRail__sub">
+                  {payoutPrice != null ? `$${payoutPrice.toFixed(2)}` : ''}
+                </span>
               </div>
-              <Link to={`/recipes/${r.recipe_id}`} className="btn-outline recipeSheet__cta">
-                RUN SIMULATION <span aria-hidden="true">→</span>
-              </Link>
-            </article>
-          ))}
-        </div>
-      </section>
+            </div>
+            <div className="instrumentRail__cell" role="listitem">
+              <span className="mono-label">CHEAPEST RIVAL ROUND TRIP</span>
+              <div className="instrumentRail__row">
+                <span className="instrumentRail__value instrumentRail__value--cost">
+                  {rivals.length
+                    ? `−${(Math.min(...rivals.map((r) => r.distribution!.entry_fee_bps + r.distribution!.exit_fee_bps)) / 100).toFixed(2)}%`
+                    : '—'}
+                </span>
+                <span className="instrumentRail__sub">{rivals.length ? `${rivals.length} PRICED` : ''}</span>
+              </div>
+            </div>
+            <div className="instrumentRail__cell" role="listitem">
+              <span className="mono-label">YOU ARE PAID FOR</span>
+              <div className="instrumentRail__row">
+                <span className="instrumentRail__value instrumentRail__value--source">TIME HELD</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      {/* ---------- Fold 5: risk chamber ---------- */}
-      <section className="fold fold--risk">
-        <h2 className="display-h1 fold__h2">
-          IF THE RECIPE CHANGES, THE MACHINE STOPS.
-          <span className="lime-square" aria-hidden="true" />
-        </h2>
-        <div className="stressGrid">
-          {STRESS_TESTS.map((t) => (
-            <div key={t.name} className="stressGrid__cell">
-              <span className={`dot ${t.tone === 'red' ? 'dot--amber' : 'dot--amber'}`} aria-hidden="true" />
-              <span className="stressGrid__name">{t.name}</span>
-              <span className={`stressGrid__resp mono-label ${t.tone === 'red' ? 'stressGrid__resp--red' : ''}`}>
-                {t.response}
+        {/* ---------- What has actually been paid ---------- */}
+        <section className="fold fold--stats">
+          <h2 className="fold__h2">
+            The record
+            <span className="lime-square" aria-hidden="true" />
+          </h2>
+          <p className="fold__intro">
+            Every figure here is read from the payout asset&apos;s own Transfer logs, not from a file this site keeps.
+            Anyone with the same logs computes the same table.
+          </p>
+
+          <div className="stats">
+            <div className="stats__cell">
+              <span className="mono-label">TOTAL DISTRIBUTED</span>
+              <span className="stats__value stats__value--lime">
+                {history ? history.totalUnits.toFixed(4) : '—'}
+                <span className="stats__unit"> {PONSAJI_TOKEN.payoutAsset.symbol}</span>
+              </span>
+              <span className="stats__note">
+                {history && history.totalUnits === 0
+                  ? 'nothing sent yet'
+                  : history?.totalUsd != null
+                    ? usd(history.totalUsd)
+                    : 'not priced'}
               </span>
             </div>
-          ))}
-        </div>
-        <Link to="/security" className="btn-outline">
-          READ THE SECURITY MODEL <span aria-hidden="true">→</span>
-        </Link>
-      </section>
+            <div className="stats__cell">
+              <span className="mono-label">RUNS SETTLED</span>
+              <span className="stats__value">{history ? history.runs : '—'}</span>
+              <span className="stats__note">
+                {history?.lastRunAt ? `last ${relativeTime(history.lastRunAt)}` : 'none yet'}
+              </span>
+            </div>
+            <div className="stats__cell">
+              <span className="mono-label">WALLETS PAID</span>
+              <span className="stats__value">{history ? history.walletsPaid.toLocaleString('en-US') : '—'}</span>
+              <span className="stats__note">distinct recipients</span>
+            </div>
+            <div className="stats__cell">
+              <span className="mono-label">LARGEST RUN</span>
+              <span className="stats__value">
+                {history ? history.largestRunUnits.toFixed(4) : '—'}
+                <span className="stats__unit"> {PONSAJI_TOKEN.payoutAsset.symbol}</span>
+              </span>
+              <span className="stats__note">single settlement</span>
+            </div>
+          </div>
 
-      {/* ---------- Fold 6: developer interface ---------- */}
-      <section className="fold fold--dev">
-        <h2 className="display-h1 fold__h2">
-          BUILT FOR OPERATORS.
-          <span className="lime-square" aria-hidden="true" />
-        </h2>
-        <div className="devPanel">
-          <pre className="devPanel__code">
-            <code>{`POST /v1/mandates/simulate
-GET  /v1/opportunities
-POST /v1/transactions/preview
-GET  /v1/agents/:address/health`}</code>
-          </pre>
-          <pre className="devPanel__code devPanel__code--response">
-            <code>{`{
-  "recipe_id": "carry-alloy",
-  "gross_apy": 0.104,
-  "estimated_net_carry": 0.081,
-  "risk_score": 34,
-  "exit_liquidity_usd": 820000,
-  "oracle_age_seconds": 14,
-  "status": "REVIEW",
-  "disclosures": ["ESTIMATE_ONLY", "NOT_GUARANTEED"]
-}`}</code>
-          </pre>
-        </div>
-      </section>
+          <p className="fold__disclosure">
+            {!isLaunched()
+              ? 'Nothing has been distributed, because the token is not deployed. These read zero rather than borrowing a number from somewhere else.'
+              : history?.incomplete
+                ? 'The history could not be read in full from this endpoint, so these figures are shown as unavailable rather than as a partial total.'
+                : `Scanned the last ${Math.round((history?.blocksScanned ?? 0) * 0.101 / 3600)} hours of chain. `}
+            <Link to="/mechanics" className="fold__link">
+              How the split is decided
+            </Link>
+          </p>
+        </section>
 
-      {/* ---------- Final fold ---------- */}
-      <section className="fold fold--final">
-        <h2 className="display-h1 fold__h2 fold__h2--big">
-          PUT IDLE CAPITAL THROUGH A BETTER PROCESS.
-          <span className="lime-square" aria-hidden="true" />
-        </h2>
-        <Link to="/opportunities" className="btn-lime">
-          OPEN THE FOUNDRY <span aria-hidden="true">→</span>
-        </Link>
-        <p className="fold__disclosure fold__disclosure--final">
-          Estimates are informational and do not guarantee returns. Onchain strategies involve loss, liquidity, oracle
-          and smart-contract risk.
-        </p>
-      </section>
+      </main>
+
+      <Footer />
     </div>
   )
 }

@@ -12,3 +12,14 @@ dist-ssr
 *.log
 npm-debug.log*
 .vite
+
+# payroll run records and plans
+payroll/
+logs/
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+cache/
+out/

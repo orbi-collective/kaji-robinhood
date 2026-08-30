@@ -1,0 +1,216 @@
+/* Footer — a machined plate, not a row of links.
+   Four columns on wide screens, stacking down to one. */
+
+.siteFooter {
+  border-top: 1px solid var(--steel-border);
+  background: var(--panel-black);
+  padding: 46px 40px 34px;
+}
+
+.siteFooter__grid {
+  display: grid;
+  grid-template-columns: 1.5fr 0.85fr 0.85fr 1.15fr;
+  gap: 44px;
+  align-items: start;
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+/* ---------- brand ---------- */
+
+.siteFooter__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.siteFooter__mark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: var(--chalk);
+}
+
+.siteFooter__blurb {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--steel-light);
+  margin: 0;
+  max-width: 38ch;
+}
+
+.siteFooter__chain {
+  font-size: 9px;
+  color: var(--steel);
+}
+
+/* ---------- nav columns ---------- */
+
+.siteFooter__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.siteFooter__navHead {
+  font-size: 9px;
+  color: var(--steel);
+  margin-bottom: 3px;
+}
+
+.siteFooter__nav a {
+  font-size: 13.5px;
+  color: var(--steel-light);
+  width: fit-content;
+  border-bottom: 1px solid transparent;
+  transition: color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.siteFooter__nav a:hover {
+  color: var(--signal-lime);
+  border-bottom-color: rgba(207, 255, 0, 0.4);
+}
+
+/* ---------- issue plate ---------- */
+
+.issuePlate {
+  position: relative;
+  border: 1px solid var(--steel);
+  background: var(--machine-black);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Four rivets, because this is a plate bolted to a machine. */
+.issuePlate__rivet {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--steel);
+  opacity: 0.75;
+}
+
+.issuePlate__rivet--tl {
+  top: 6px;
+  left: 6px;
+}
+
+.issuePlate__rivet--tr {
+  top: 6px;
+  right: 6px;
+}
+
+.issuePlate__rivet--bl {
+  bottom: 6px;
+  left: 6px;
+}
+
+.issuePlate__rivet--br {
+  bottom: 6px;
+  right: 6px;
+}
+
+.issueRow {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(38, 42, 37, 0.7);
+}
+
+.issueRow:last-child {
+  border-bottom: none;
+}
+
+.issueRow__key {
+  font-size: 9px;
+  color: var(--steel);
+}
+
+.issueRow__val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--signal-lime);
+  word-break: break-all;
+  transition: filter 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.issueRow__val:hover {
+  filter: brightness(1.15);
+}
+
+/* Pending is steel, never lime. Lime means live in this system. */
+.issueRow__pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.11em;
+  color: var(--steel);
+}
+
+.issueRow__dot {
+  width: 5px;
+  height: 5px;
+  background: var(--steel);
+  flex: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .issueRow__dot {
+    animation: issuePending 2.8s ease-in-out infinite;
+  }
+}
+
+@keyframes issuePending {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---------- legal ---------- */
+
+.siteFooter__legal {
+  max-width: 1360px;
+  margin: 38px auto 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--steel-border);
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--steel);
+}
+
+@media (max-width: 1100px) {
+  .siteFooter__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+  }
+
+  .siteFooter__brand,
+  .issuePlate {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .siteFooter {
+    padding: 32px 20px 26px;
+  }
+
+  .siteFooter__grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}

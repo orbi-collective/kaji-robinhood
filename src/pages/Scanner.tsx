@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import ScenePlate from '../components/ScenePlate'
-import { Sparkline } from '../components/Sparkline'
 import { AppShell } from '../components/AppShell'
-import { EmptyState, ErrorState, Skeleton, SourceTag, VerdictTag } from '../components/ui'
+import { Dialog, EmptyState, ErrorState, Skeleton, SourceTag, VerdictTag } from '../components/ui'
+import MandateForm from '../components/MandateForm'
 import { fetchOpportunities } from '../lib/adapters'
 import { evaluatePolicy, formatDuration, simulate } from '../lib/policy'
 import { DEFAULT_MANDATE, type Opportunity, type RiskMode } from '../lib/types'
@@ -12,7 +12,8 @@ import { useAgent } from '../state/AgentStore'
 import './Scanner.css'
 
 const RISK_MODES: RiskMode[] = ['conservative', 'measured', 'opportunistic']
-const usd = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : `$${Math.round(n / 1000)}K`)
+const usd = (n: number) =>
+  n >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : n >= 1000 ? `$${Math.round(n / 1000)}K` : `$${Math.round(n)}`
 const pct = (n: number) => `${(n * 100).toFixed(2)}%`
 
 function OutputIcon({ id }: { id: string }) {
@@ -38,10 +39,25 @@ function OutputIcon({ id }: { id: string }) {
 }
 
 export default function Scanner() {
-  const { mandate } = useAgent()
+  const { mandate, totalCapital } = useAgent()
   const active = mandate ?? DEFAULT_MANDATE
   const [riskFilter, setRiskFilter] = useState<RiskMode | 'all'>('all')
   const [hideBlocked, setHideBlocked] = useState(false)
+
+  /**
+   * `?limits=1` opens the drawer on arrival, so the old /mandates/new links —
+   * and anyone's bookmark of them — still land somewhere that works.
+   */
+  const [params, setParams] = useSearchParams()
+  const [limitsOpen, setLimitsOpen] = useState(params.has('limits'))
+
+  function closeLimits() {
+    setLimitsOpen(false)
+    if (params.has('limits')) {
+      params.delete('limits')
+      setParams(params, { replace: true })
+    }
+  }
 
   const {
     data: opportunities,
@@ -55,39 +71,40 @@ export default function Scanner() {
     queryFn: ({ signal }) => fetchOpportunities(signal),
   })
 
-  /** Each row carries its own policy verdict against the current mandate, so the
-   *  scanner never advertises something the engine would refuse. */
-  const rows = useMemo(() => {
+  /**
+   * Each row carries its own policy verdict against the current mandate, so the
+   * scanner never advertises something the engine would refuse.
+   *
+   * The allocation each row is judged at is the mandate's *remaining* headroom,
+   * not its full cap — that is the size a user could actually still take. With
+   * no headroom left the row is judged at the full cap so the spend check
+   * blocks and says why, rather than silently previewing a $0 deposit.
+   */
+  const evaluated = useMemo(() => {
     if (!opportunities) return []
-    return opportunities
-      .map((o: Opportunity) => {
-        const sim = simulate(o, {
-          capital_usd: active.capital_usd,
-          holding_days: 30,
-          market_stress_pct: 0,
-          funding_reversal: 0,
-          liquidity_shock_pct: 0,
-        })
-        return { opportunity: o, policy: evaluatePolicy(active, o, sim, active.capital_usd) }
+    const headroom = Math.max(0, active.capital_usd - totalCapital)
+    const previewCapital = headroom > 0 ? headroom : active.capital_usd
+    return opportunities.map((o: Opportunity) => {
+      const sim = simulate(o, {
+        capital_usd: previewCapital,
+        holding_days: 30,
+        market_stress_pct: 0,
+        funding_reversal: 0,
+        liquidity_shock_pct: 0,
       })
-      .filter((r) => (riskFilter === 'all' ? true : r.opportunity.profile === riskFilter))
-      .filter((r) => (hideBlocked ? r.policy.verdict !== 'block' : true))
-  }, [opportunities, active, riskFilter, hideBlocked])
+      return { opportunity: o, policy: evaluatePolicy(active, o, sim, previewCapital, totalCapital) }
+    })
+  }, [opportunities, active, totalCapital])
 
-  const blockedCount = useMemo(
+  const rows = useMemo(
     () =>
-      (opportunities ?? []).filter((o) => {
-        const sim = simulate(o, {
-          capital_usd: active.capital_usd,
-          holding_days: 30,
-          market_stress_pct: 0,
-          funding_reversal: 0,
-          liquidity_shock_pct: 0,
-        })
-        return evaluatePolicy(active, o, sim, active.capital_usd).verdict === 'block'
-      }).length,
-    [opportunities, active],
+      evaluated
+        .filter((r) => (riskFilter === 'all' ? true : r.opportunity.profile === riskFilter))
+        .filter((r) => (hideBlocked ? r.policy.verdict !== 'block' : true)),
+    [evaluated, riskFilter, hideBlocked],
   )
+
+  const blockedCount = useMemo(() => evaluated.filter((r) => r.policy.verdict === 'block').length, [evaluated])
 
   return (
     <AppShell plate={<ScenePlate scene="kaji-scanner" className="scanner__plate" />}>
@@ -154,14 +171,21 @@ export default function Scanner() {
                 <span>HIDE BLOCKED</span>
               </label>
             </div>
+
+            <div className="filterRail__cell filterRail__cell--action">
+              <span className="mono-label">LIMITS</span>
+              <button type="button" className="filterRail__edit" onClick={() => setLimitsOpen(true)}>
+                EDIT <span aria-hidden="true">→</span>
+              </button>
+            </div>
           </div>
 
           {!mandate && (
             <p className="scanner__mandateHint">
               Ranking against the default mandate.{' '}
-              <Link to="/mandates/new" className="scanner__mandateLink">
+              <button type="button" className="scanner__mandateLink" onClick={() => setLimitsOpen(true)}>
                 Set your own limits
-              </Link>{' '}
+              </button>{' '}
               to filter these results against real constraints.
             </p>
           )}
@@ -192,9 +216,9 @@ export default function Scanner() {
                 : 'No recipe matches this filter right now. Clear the risk filter or check back after the next scan.'
             }
             action={
-              <Link to="/mandates/new" className="btn-outline">
-                ADJUST MANDATE <span aria-hidden="true">→</span>
-              </Link>
+              <button type="button" className="btn-outline" onClick={() => setLimitsOpen(true)}>
+                ADJUST LIMITS <span aria-hidden="true">→</span>
+              </button>
             }
           />
         )}
@@ -215,7 +239,7 @@ export default function Scanner() {
                 EXIT LIQUIDITY
               </span>
               <span role="columnheader" className="mono-label">
-                ORACLE AGE
+                INCOME BASIS
               </span>
               <span role="columnheader" className="mono-label">
                 POLICY
@@ -235,12 +259,24 @@ export default function Scanner() {
                   </div>
                 </div>
 
+                {/* A vault pays a rate; a distribution token charges to enter
+                    and pays a share of somebody else's volume. Printing one
+                    number under one heading would flatten that difference away,
+                    so the cell reports whichever measure the venue actually has. */}
                 <div role="cell" className="scanRow__carry">
-                  <span className="scanRow__carryValue">{pct(o.estimated_net_carry)}</span>
-                  <Sparkline points={o.trace} width={90} height={20} down={o.trend_24h < 0} />
-                  <span className={`scanRow__delta ${o.trend_24h < 0 ? 'scanRow__delta--down' : ''}`}>
-                    {o.trend_24h < 0 ? '↓' : '↑'} {Math.abs(o.trend_24h * 100).toFixed(2)}% (24H)
-                  </span>
+                  {o.distribution ? (
+                    <>
+                      <span className="scanRow__carryValue scanRow__carryValue--cost">
+                        −{((o.distribution.entry_fee_bps + o.distribution.exit_fee_bps) / 100).toFixed(2)}%
+                      </span>
+                      <span className="scanRow__delta">ROUND TRIP TO ENTER</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="scanRow__carryValue">{pct(o.estimated_net_carry)}</span>
+                      <span className="scanRow__delta">{pct(o.gross_apy)} GROSS</span>
+                    </>
+                  )}
                 </div>
 
                 <div role="cell" className="scanRow__risk">
@@ -259,25 +295,48 @@ export default function Scanner() {
                         ? 'MEDIUM'
                         : 'LOW'}
                   </span>
-                  <span className="mono-label">{usd(o.exit_liquidity_usd)} DEPTH</span>
+                  {/* Depth is not market capitalisation and must not read like
+                      it: this is what a seller can take out before the price
+                      moves against them by the stated amount. */}
+                  <span className="mono-label" title={o.distribution ? 'Quote asset obtainable before a 5% price fall, from in-range pool liquidity' : 'Liquid share of the vault'}>
+                    {o.distribution
+                      ? `≥ ${usd(o.exit_liquidity_usd)} @ 5% IMPACT`
+                      : `${usd(o.exit_liquidity_usd)} VAULT LIQUIDITY`}
+                  </span>
                 </div>
 
                 <div role="cell" className="scanRow__oracle">
-                  <span
-                    className={`scanRow__oracleValue ${o.oracle_age_seconds > o.oracle_heartbeat_seconds ? 'scanRow__oracleValue--stale' : ''}`}
-                    title={`Chainlink heartbeat ${formatDuration(o.oracle_heartbeat_seconds)}`}
-                  >
-                    {formatDuration(o.oracle_age_seconds)}
-                  </span>
+                  {o.distribution ? (
+                    <span
+                      className={`scanRow__oracleValue ${!o.distribution.pays_holders ? 'scanRow__oracleValue--stale' : ''}`}
+                      title={o.distribution.share_basis}
+                    >
+                      {!o.distribution.pays_holders
+                        ? 'PAYS NOTHING'
+                        : o.distribution.interval_seconds
+                          ? `${Math.round(o.distribution.interval_seconds / 60)}m CYCLE`
+                          : 'CADENCE UNKNOWN'}
+                    </span>
+                  ) : (
+                    <span
+                      className={`scanRow__oracleValue ${(o.oracle_age_seconds ?? 0) > (o.oracle_heartbeat_seconds ?? Infinity) ? 'scanRow__oracleValue--stale' : ''}`}
+                      title={`Chainlink heartbeat ${formatDuration(o.oracle_heartbeat_seconds ?? 0)}`}
+                    >
+                      {formatDuration(o.oracle_age_seconds ?? 0)} ORACLE
+                    </span>
+                  )}
                   <SourceTag source={o.source} />
                 </div>
 
                 <div role="cell" className="scanRow__policy">
                   <VerdictTag verdict={policy.verdict} />
                   <span className="mono-label scanRow__policyDetail">
+                    {/* Name the check that produced this verdict, not merely
+                        the first that was not a pass — a row blocked on cost
+                        must not be labelled with an unrelated review. */}
                     {policy.verdict === 'pass'
                       ? 'WITHIN MANDATE'
-                      : (policy.checks.find((c) => c.verdict !== 'pass')?.label ?? '').toUpperCase()}
+                      : (policy.checks.find((c) => c.verdict === policy.verdict)?.label ?? '').toUpperCase()}
                   </span>
                 </div>
 
@@ -312,6 +371,18 @@ export default function Scanner() {
           </button>
         </div>
       </footer>
+
+      <Dialog open={limitsOpen} onClose={closeLimits} labelledBy="limits-title" className="limitsDialog">
+        <div className="limitsDialog__head">
+          <h2 id="limits-title" className="limitsDialog__title">
+            Machine limits
+          </h2>
+          <p className="limitsDialog__sub">
+            Every row in the table is judged against these. Change one and the verdicts change with it.
+          </p>
+        </div>
+        <MandateForm onSaved={closeLimits} />
+      </Dialog>
     </AppShell>
   )
 }

@@ -19,7 +19,16 @@ import { injected } from 'wagmi/connectors'
  * - Chainlink feeds:           Chainlink reference-data-directory (feeds-robinhood-mainnet)
  */
 
-const env = import.meta.env
+/**
+ * Overrides, from whichever environment this module was loaded in.
+ *
+ * The browser bundle gets `import.meta.env` from Vite; the payroll crank runs
+ * the same file under node, where that is undefined and `process.env` is the
+ * source. Reading both means the crank and the app cannot end up pointed at
+ * different chains.
+ */
+const nodeEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env
+const env: Record<string, string | undefined> = { ...nodeEnv, ...import.meta.env }
 
 const DEFAULTS = {
   chainId: 4663,
@@ -56,7 +65,7 @@ export const MORPHO = {
 } as const
 
 /**
- * ERC-4626 vaults SAJI can read and deposit into. Each is a real, curated
+ * ERC-4626 vaults PONSAJI can read and deposit into. Each is a real, curated
  * Morpho vault; `asset` is asserted onchain before a deposit is prepared.
  */
 export const VAULTS = [

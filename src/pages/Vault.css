@@ -104,6 +104,25 @@
   color: var(--steel-light);
 }
 
+/* The chain re-read is an action, so it carries the affordance of one. */
+.sideStat__refresh {
+  align-self: start;
+  text-align: left;
+  border-bottom: 1px solid var(--steel-border);
+  padding-bottom: 2px;
+  transition: color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sideStat__refresh:hover:not(:disabled) {
+  color: var(--signal-lime);
+  border-bottom-color: var(--signal-lime);
+}
+
+.sideStat__refresh:disabled {
+  color: var(--steel);
+  cursor: default;
+}
+
 /* ---------- scene ---------- */
 
 .vaultPage__scene {
@@ -302,6 +321,52 @@
   border-color: rgba(255, 75, 67, 0.5);
 }
 
+/* Inspecting is not destructive, so it must not borrow the close button's red. */
+.positionTable__inspect {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--steel-border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 11px 18px;
+  color: var(--steel-light);
+  min-height: 44px;
+  transition:
+    color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.positionTable__inspect:hover {
+  color: var(--signal-lime);
+  border-color: rgba(207, 255, 0, 0.5);
+}
+
+/* Provenance line under an onchain table: says which call produced the rows. */
+.positionTable__note {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--steel);
+  padding: 14px 4px 2px;
+}
+
+.positionTable__note code {
+  font-family: var(--font-mono);
+  color: var(--steel-light);
+}
+
+/* A reading that is easy to misread carries its caveat in amber, not silence. */
+.positionTable__note--caution {
+  border-left: 1px solid var(--warning-amber);
+  padding-left: 12px;
+  color: var(--steel-light);
+  max-width: 76ch;
+  line-height: 1.6;
+}
+
 /* ---------- bottom ---------- */
 
 .vaultPage__bottom {
@@ -414,30 +479,6 @@
   font-size: 12.5px;
   color: var(--steel-light);
   line-height: 1.5;
-}
-
-.vaultPage__pause {
-  border: 1px solid rgba(207, 255, 0, 0.5);
-  color: var(--chalk);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 23px;
-  letter-spacing: 0.05em;
-  padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-radius: 2px;
-  transition: background 150ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.vaultPage__pause:hover {
-  background: rgba(207, 255, 0, 0.07);
-}
-
-.vaultPage__pause--resume {
-  border-color: rgba(211, 138, 40, 0.6);
-  color: var(--warning-amber);
 }
 
 @media (max-width: 1200px) {

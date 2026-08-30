@@ -33,11 +33,15 @@
 }
 
 .filterRail {
-  display: inline-flex;
-  flex-wrap: wrap;
+  /* The 1px gaps are the rules between cells: the grid's own background shows
+     through them. A flex row with per-cell borders needed nth-child rules to
+     tidy the ends, and those broke the moment a fifth cell was added. */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+  gap: 1px;
   margin-top: 32px;
   border: 1px solid var(--steel-border);
-  background: rgba(9, 11, 9, 0.9);
+  background: var(--steel-border);
 }
 
 .filterRail__cell {
@@ -45,12 +49,8 @@
   flex-direction: column;
   gap: 8px;
   padding: 14px 24px 16px;
-  border-right: 1px solid var(--steel-border);
-  min-width: 150px;
-}
-
-.filterRail__cell:last-child {
-  border-right: none;
+  min-width: 0;
+  background: rgba(9, 11, 9, 0.96);
 }
 
 .filterRail__value {
@@ -135,10 +135,84 @@
   max-width: 62ch;
 }
 
+/* A button, not a link — it opens the limits panel on this page rather than
+   navigating away from the table it governs. */
 .scanner__mandateLink {
   color: var(--signal-lime);
   text-decoration: underline;
   text-underline-offset: 3px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.scanner__mandateLink:hover {
+  filter: brightness(1.15);
+}
+
+/* ---------- limits cell ---------- */
+
+.filterRail__cell--action {
+  justify-content: space-between;
+  min-width: 128px;
+}
+
+.filterRail__edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 6px 14px;
+  border: 1px solid var(--steel);
+  background: transparent;
+  color: var(--chalk);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.11em;
+  cursor: pointer;
+  transition:
+    border-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.filterRail__edit:hover {
+  border-color: var(--signal-lime);
+  color: var(--signal-lime);
+}
+
+/* ---------- limits dialog ---------- */
+
+.limitsDialog {
+  width: min(760px, 92vw);
+}
+
+.limitsDialog__head {
+  padding: 26px 30px 0;
+}
+
+.limitsDialog__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 30px;
+  line-height: 1.05;
+  color: var(--chalk);
+  margin: 0 0 10px;
+}
+
+.limitsDialog__sub {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--steel-light);
+  margin: 0;
+  max-width: 56ch;
+}
+
+/* The form carried page margins; inside the dialog it needs padding instead. */
+.limitsDialog .limitForm {
+  padding: 22px 30px 30px;
+  max-width: none;
 }
 
 /* ---------- table ---------- */
@@ -235,15 +309,16 @@
   line-height: 1;
 }
 
+/* A cost, not a yield: it must not borrow the lime that means safe output. */
+.scanRow__carryValue--cost {
+  color: var(--warning-amber);
+}
+
 .scanRow__delta {
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.08em;
   color: var(--steel-light);
-}
-
-.scanRow__delta--down {
-  color: var(--steel);
 }
 
 .scanRow__riskValue,
@@ -381,23 +456,11 @@
   }
 
   .filterRail {
-    display: grid;
     grid-template-columns: 1fr 1fr;
-    width: 100%;
   }
 
   .filterRail__cell {
-    min-width: 0;
-    border-bottom: 1px solid var(--steel-border);
     padding: 12px 16px 14px;
-  }
-
-  .filterRail__cell:nth-child(2n) {
-    border-right: none;
-  }
-
-  .filterRail__cell:nth-last-child(-n + 2) {
-    border-bottom: none;
   }
 
   .scanner__footer {

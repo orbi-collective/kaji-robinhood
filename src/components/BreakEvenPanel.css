@@ -1,0 +1,251 @@
+/* Break-even panel — the cost ladder and the horizon.
+   Machined surfaces, hairline rules, one lime signal. Nothing decorative. */
+
+.breakEven {
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+  margin-top: 28px;
+}
+
+.breakEven__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--steel-border);
+  flex-wrap: wrap;
+}
+
+.breakEven__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  color: var(--chalk);
+  margin: 8px 0 0;
+  max-width: 30ch;
+}
+
+.breakEven__cost {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 40px;
+  line-height: 0.9;
+  color: var(--steel-light);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A cost that is actually charged reads as a warning, not as a neutral stat. */
+.breakEven__cost--charged {
+  color: var(--warning-amber);
+}
+
+.breakEven__costLabel {
+  font-size: 9px;
+  color: var(--steel);
+}
+
+/* ---------- cost ladder ---------- */
+
+.breakEven__ladder {
+  border-bottom: 1px solid var(--steel-border);
+}
+
+.costRow {
+  display: grid;
+  grid-template-columns: 130px 74px 92px 1fr;
+  gap: 16px;
+  align-items: baseline;
+  padding: 11px 24px;
+  border-bottom: 1px solid rgba(38, 42, 37, 0.55);
+  font-size: 13.5px;
+}
+
+.costRow:last-child {
+  border-bottom: none;
+}
+
+.costRow--head {
+  padding-top: 14px;
+  padding-bottom: 10px;
+}
+
+.costRow--head span {
+  font-size: 9px;
+}
+
+.costRow__label {
+  color: var(--chalk);
+}
+
+.costRow__bps,
+.costRow__usd {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--steel-light);
+}
+
+.costRow__usd {
+  color: var(--warning-amber);
+}
+
+.costRow__src {
+  font-size: 12px;
+  color: var(--steel);
+  line-height: 1.5;
+}
+
+.costRow--total {
+  background: var(--machine-black);
+  border-top: 1px solid var(--steel-border);
+}
+
+.costRow--total .costRow__label,
+.costRow--total .costRow__bps {
+  color: var(--chalk);
+  font-weight: 600;
+}
+
+/* ---------- measured income ---------- */
+
+.breakEven__income {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  border-bottom: 1px solid var(--steel-border);
+}
+
+.incomeCell {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 20px 24px;
+  border-right: 1px solid var(--steel-border);
+}
+
+.incomeCell:last-child {
+  border-right: none;
+}
+
+.incomeCell__value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 27px;
+  line-height: 1;
+  color: var(--chalk);
+  font-variant-numeric: tabular-nums;
+}
+
+.incomeCell__value--lime {
+  color: var(--signal-lime);
+}
+
+.incomeCell__note {
+  font-size: 12px;
+  color: var(--steel);
+  line-height: 1.5;
+}
+
+/* ---------- regimes ---------- */
+
+.regimes__row {
+  display: grid;
+  grid-template-columns: 130px 92px 1fr;
+  gap: 16px;
+  align-items: baseline;
+  padding: 13px 24px;
+  border-bottom: 1px solid rgba(38, 42, 37, 0.55);
+}
+
+.regimes__row--head span {
+  font-size: 9px;
+}
+
+.regimes__label {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  color: var(--chalk);
+}
+
+.regimes__days {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--signal-lime);
+}
+
+/* Never repaying is a stopped state, and reads as one. */
+.regimes__days--never {
+  color: var(--fault-red);
+}
+
+.regimes__note {
+  font-size: 12.5px;
+  color: var(--steel);
+  line-height: 1.5;
+}
+
+.breakEven__foot {
+  font-size: 12.5px;
+  color: var(--steel);
+  line-height: 1.65;
+  padding: 16px 24px 20px;
+  margin: 0;
+  max-width: 88ch;
+}
+
+/* ---------- unresolved ---------- */
+
+.breakEven__blocked {
+  padding: 20px 24px 22px;
+  border-left: 2px solid var(--warning-amber);
+  margin: 0 24px 22px;
+  background: var(--machine-black);
+}
+
+.breakEven__blocked .mono-label {
+  color: var(--warning-amber);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.breakEven__blocked p {
+  font-size: 13.5px;
+  color: var(--steel-light);
+  line-height: 1.65;
+  margin: 0 0 10px;
+  max-width: 76ch;
+}
+
+.breakEven__blocked p:last-child {
+  margin-bottom: 0;
+}
+
+.breakEven__blockedEmph {
+  color: var(--chalk) !important;
+}
+
+@media (max-width: 720px) {
+  .costRow,
+  .regimes__row {
+    grid-template-columns: 1fr auto;
+    gap: 4px 12px;
+  }
+
+  .costRow__src,
+  .regimes__note {
+    grid-column: 1 / -1;
+  }
+
+  .breakEven__cost {
+    font-size: 30px;
+  }
+}

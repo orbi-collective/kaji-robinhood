@@ -18,8 +18,8 @@ import './TopNav.css'
  * part of the product.
  */
 export const NAV_LINKS = [
+  { label: 'MECHANICS', to: '/mechanics', owns: ['/mechanics', '/payroll'] },
   { label: 'SCANNER', to: '/opportunities', owns: ['/opportunities', '/recipes'] },
-  { label: 'MANDATE', to: '/mandates/new', owns: ['/mandates'] },
   { label: 'VAULT', to: '/vaults/me', owns: ['/vaults'] },
   { label: 'SECURITY', to: '/security', owns: ['/security'] },
 ] as const
@@ -29,16 +29,16 @@ export default function TopNav({ variant = 'app' }: { variant?: 'app' | 'landing
 
   return (
     <header className={`topNav topNav--${variant}`}>
-      <Link to="/" className="topNav__brand" aria-label="SAJI home">
+      <Link to="/" className="topNav__brand" aria-label="PONSAJI home">
         <img
           className="topNav__brandMark"
-          src="/assets/saji-mark.png"
+          src="/assets/ponsaji-mark.png"
           width="38"
           height="38"
           alt=""
           aria-hidden="true"
         />
-        <span className="topNav__brandName">SAJI</span>
+        <span className="topNav__brandName">PONSAJI</span>
         <span className="topNav__brandSuffix">CARRY FOUNDRY</span>
       </Link>
 
@@ -75,8 +75,8 @@ export default function TopNav({ variant = 'app' }: { variant?: 'app' | 'landing
                 </svg>
               </span>
             </span>
-            <Link to="/opportunities" className="topNav__cta">
-              OPEN APP <span aria-hidden="true">→</span>
+            <Link to="/mechanics" className="topNav__cta">
+              HOW IT WORKS <span aria-hidden="true">→</span>
             </Link>
           </>
         ) : (

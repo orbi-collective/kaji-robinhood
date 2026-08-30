@@ -1,0 +1,437 @@
+/* Payroll — PONSAJI's own distribution, held to the standard the rest of the app
+   applies to everyone else's. Machined surfaces, hairlines, one lime signal. */
+
+.payroll {
+  /* Centred, not pinned left: without the auto margin this sat against the
+     left edge and left half a wide screen empty. */
+  padding: 40px 40px 90px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.payroll__head {
+  margin-bottom: 34px;
+}
+
+.payroll__h1 {
+  font-size: clamp(44px, 5.4vw, 74px);
+  text-transform: uppercase;
+  margin: 12px 0 18px;
+}
+
+.payroll__lede {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--steel-light);
+  max-width: 70ch;
+  margin: 0;
+}
+
+/* ---------- trust assumption ---------- */
+
+.payroll__trust {
+  border: 1px solid var(--steel-border);
+  border-left: 2px solid var(--warning-amber);
+  background: var(--panel-black);
+  padding: 22px 24px;
+  margin-bottom: 30px;
+}
+
+.payroll__trust > .mono-label {
+  display: block;
+  color: var(--warning-amber);
+  margin-bottom: 10px;
+}
+
+.payroll__trustTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 21px;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--chalk);
+  margin: 0 0 12px;
+  max-width: 34ch;
+}
+
+.payroll__trust p {
+  font-size: 14px;
+  line-height: 1.68;
+  color: var(--steel-light);
+  max-width: 76ch;
+  margin: 0 0 10px;
+}
+
+.payroll__trust p:last-child {
+  margin-bottom: 0;
+}
+
+.payroll__paidIn {
+  border: 1px solid var(--steel-border);
+  border-left: 2px solid var(--signal-lime);
+  background: var(--panel-black);
+  padding: 22px 24px;
+  margin-bottom: 30px;
+}
+
+.payroll__paidIn > .mono-label {
+  display: block;
+  color: var(--signal-lime);
+  margin-bottom: 10px;
+}
+
+.payroll__paidIn p {
+  font-size: 14px;
+  line-height: 1.68;
+  color: var(--steel-light);
+  max-width: 76ch;
+  margin: 0 0 10px;
+}
+
+.payroll__paidIn p:last-child {
+  margin-bottom: 0;
+}
+
+/* An identity assertion and the powers that survive it. */
+.assetCheck {
+  border: 1px solid var(--steel-border);
+  background: var(--machine-black);
+  padding: 16px 18px;
+  margin-top: 16px;
+}
+
+.assetCheck > .mono-label {
+  display: block;
+  color: var(--signal-lime);
+  margin-bottom: 8px;
+}
+
+.assetCheck__line {
+  font-size: 13px !important;
+  color: var(--steel-light) !important;
+  margin: 0 0 8px !important;
+}
+
+.assetCheck__line a {
+  color: var(--signal-lime);
+  border-bottom: 1px solid rgba(207, 255, 0, 0.3);
+}
+
+.assetCheck__caution {
+  font-size: 12.5px !important;
+  color: var(--steel) !important;
+  border-left: 1px solid var(--warning-amber);
+  padding-left: 10px;
+  margin: 0 0 6px !important;
+}
+
+/* ---------- pre-launch ---------- */
+
+.payroll__pending {
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+  padding: 26px 24px;
+  margin-bottom: 34px;
+}
+
+.payroll__pending > .mono-label {
+  color: var(--steel);
+}
+
+.payroll__pendingTitle {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 30px;
+  text-transform: uppercase;
+  margin: 10px 0 12px;
+}
+
+.payroll__pending p {
+  font-size: 14px;
+  line-height: 1.68;
+  color: var(--steel-light);
+  max-width: 72ch;
+  margin: 0 0 20px;
+}
+
+.payroll__spec {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  background: var(--steel-border);
+  border: 1px solid var(--steel-border);
+  margin: 0;
+}
+
+.payroll__spec > div {
+  background: var(--foundry-black);
+  padding: 14px 16px;
+}
+
+.payroll__spec dt {
+  margin-bottom: 6px;
+}
+
+.payroll__spec dd {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--chalk);
+}
+
+/* ---------- live ---------- */
+
+.payroll__cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  border: 1px solid var(--steel-border);
+  margin-bottom: 22px;
+}
+
+.payrollCell {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 18px 20px;
+  border-right: 1px solid var(--steel-border);
+}
+
+.payrollCell:last-child {
+  border-right: none;
+}
+
+.payrollCell__value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--chalk);
+  font-variant-numeric: tabular-nums;
+}
+
+.payrollCell__value--lime {
+  color: var(--signal-lime);
+}
+
+.payrollCell__note {
+  font-size: 11.5px;
+  color: var(--steel);
+}
+
+.payrollCell__note a {
+  color: var(--steel-light);
+  border-bottom: 1px solid var(--steel-border);
+}
+
+.payrollCell__note a:hover {
+  color: var(--signal-lime);
+}
+
+.payroll__blocked {
+  border-left: 2px solid var(--warning-amber);
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: var(--steel-light);
+  background: var(--machine-black);
+  margin: 0 0 22px;
+}
+
+.payroll__mine {
+  border: 1px solid rgba(207, 255, 0, 0.4);
+  background: rgba(207, 255, 0, 0.04);
+  padding: 16px 20px;
+  margin-bottom: 22px;
+}
+
+.payroll__mineRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--chalk);
+}
+
+.payroll__mineShare {
+  color: var(--signal-lime);
+}
+
+/* ---------- ledger ---------- */
+
+.ledger {
+  border: 1px solid var(--steel-border);
+  margin-bottom: 34px;
+  overflow-x: auto;
+}
+
+.ledger__row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.8fr 1fr 0.8fr;
+  gap: 14px;
+  padding: 11px 18px;
+  border-bottom: 1px solid rgba(38, 42, 37, 0.55);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--steel-light);
+  font-variant-numeric: tabular-nums;
+  min-width: 620px;
+}
+
+.ledger__row--head {
+  background: var(--machine-black);
+}
+
+.ledger__wallet {
+  color: var(--chalk);
+}
+
+.ledger__share {
+  color: var(--signal-lime);
+}
+
+.ledger__note {
+  padding: 12px 18px;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--steel);
+  min-width: 620px;
+}
+
+/* ---------- proofs ---------- */
+
+.proofs {
+  border-top: 1px solid var(--steel-border);
+  padding-top: 30px;
+}
+
+.proofs__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 28px;
+  text-transform: uppercase;
+  margin: 0 0 22px;
+}
+
+.proof {
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+  padding: 20px 22px;
+  margin-bottom: 14px;
+}
+
+.proof__h {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  text-transform: uppercase;
+  color: var(--chalk);
+  margin: 0 0 10px;
+}
+
+.proof p {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--steel-light);
+  max-width: 70ch;
+  margin: 0 0 14px;
+}
+
+.proof__control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.proof__control input[type='range'] {
+  flex: 1 1 220px;
+  accent-color: var(--signal-lime);
+  min-height: 24px;
+}
+
+.proof__readout {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--chalk);
+  font-variant-numeric: tabular-nums;
+  min-width: 72px;
+}
+
+.proof__result {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.proof__value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 38px;
+  line-height: 1;
+  color: var(--signal-lime);
+  font-variant-numeric: tabular-nums;
+}
+
+.proof__formula {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--steel);
+  background: var(--machine-black);
+  border: 1px solid var(--steel-border);
+  padding: 9px 12px;
+  overflow-x: auto;
+}
+
+/* The field a bound was computed against is part of the bound. */
+.proof__basis {
+  font-size: 12.5px !important;
+  color: var(--steel) !important;
+  margin: 10px 0 0 !important;
+}
+
+.proof__checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.proof__check {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 6px 10px;
+  border: 1px solid var(--steel-border);
+}
+
+.proof__check--ok {
+  color: var(--signal-lime);
+  border-color: rgba(207, 255, 0, 0.4);
+}
+
+.proof__check--fail {
+  color: var(--fault-red);
+  border-color: rgba(255, 75, 67, 0.5);
+}
+
+.payroll__foot {
+  margin: 30px 0 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--steel);
+  max-width: 80ch;
+}
+
+@media (max-width: 720px) {
+  .payroll {
+    padding: 24px 20px 70px;
+  }
+}
+
+.payroll__link {
+  color: var(--signal-lime);
+  border-bottom: 1px solid rgba(207, 255, 0, 0.35);
+}

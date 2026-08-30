@@ -6,9 +6,21 @@
   position: absolute;
   inset: 0;
   z-index: -2;
+  /* Darkened at both edges, where the two columns sit, and left open through
+     the middle where the plate is actually worth seeing. The old ramp went
+     nearly clear at 52% and the policy card has been reading washed out over
+     it ever since the body was centred. */
   background:
-    linear-gradient(90deg, rgba(6, 7, 6, 0.97) 0%, rgba(6, 7, 6, 0.8) 30%, rgba(6, 7, 6, 0.12) 52%, rgba(6, 7, 6, 0.34) 100%),
-    linear-gradient(180deg, rgba(6, 7, 6, 0.42) 0%, rgba(6, 7, 6, 0) 24%, rgba(6, 7, 6, 0.92) 66%);
+    linear-gradient(
+      90deg,
+      rgba(6, 7, 6, 0.97) 0%,
+      rgba(6, 7, 6, 0.9) 24%,
+      rgba(6, 7, 6, 0.42) 44%,
+      rgba(6, 7, 6, 0.46) 58%,
+      rgba(6, 7, 6, 0.88) 78%,
+      rgba(6, 7, 6, 0.96) 100%
+    ),
+    linear-gradient(180deg, rgba(6, 7, 6, 0.5) 0%, rgba(6, 7, 6, 0) 26%, rgba(6, 7, 6, 0.94) 68%);
   pointer-events: none;
 }
 
@@ -64,16 +76,22 @@
 /* ---------- body ---------- */
 
 .recipePage__body {
+  /* Held to a readable measure and centred. Pinning the two columns to the
+     screen edges with space-between opened a thousand pixels of dead middle on
+     a wide monitor, and the plate behind it is a backdrop, not content. */
   flex: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) 360px;
+  align-items: start;
+  gap: 48px;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
   padding: 26px 40px 18px;
-  gap: 32px;
 }
 
 .recipePage__left {
-  max-width: 440px;
+  min-width: 0;
 }
 
 .backLink {
@@ -106,12 +124,13 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   border: 1px solid var(--steel);
-  background: rgba(8, 10, 8, 0.9);
-  max-width: 440px;
+  background: rgba(8, 10, 8, 0.94);
+  backdrop-filter: blur(2px);
+  max-width: 560px;
 }
 
 .statGrid__cell {
-  padding: 14px 16px;
+  padding: 17px 18px;
   border-right: 1px solid var(--steel-border);
   border-bottom: 1px solid var(--steel-border);
   display: flex;
@@ -240,7 +259,7 @@
 /* ---------- policy card ---------- */
 
 .mandateCard {
-  width: 320px;
+  width: 100%;
   border: 1px solid var(--steel);
   background: rgba(10, 12, 10, 0.92);
   backdrop-filter: blur(2px);
@@ -306,13 +325,18 @@
 
 .simulator {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   border-top: 1px solid var(--steel);
   background: rgba(6, 7, 6, 0.96);
 }
 
 .simulator__controls {
-  padding: 16px 40px 18px;
+  /* Matches the body's measure so the controls line up with the columns above
+     rather than running edge to edge under them. */
+  padding: 18px 40px 20px;
+  max-width: 1320px;
+  margin-left: auto;
+  width: 100%;
 }
 
 .simulator__title {
@@ -550,6 +574,10 @@
     max-width: 440px;
   }
 
+  .recipePage__body {
+    grid-template-columns: 1fr;
+  }
+
   .simulator {
     grid-template-columns: 1fr;
   }
@@ -599,4 +627,13 @@
   .statGrid__cell:nth-child(2n) {
     border-right: none;
   }
+}
+
+/* A cost never borrows the lime that means safe output. */
+.statGrid__value--warn {
+  color: var(--warning-amber);
+}
+
+.statGrid__value--none {
+  color: var(--steel);
 }
