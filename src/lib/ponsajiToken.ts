@@ -45,8 +45,10 @@ const envOverride = (globalThis as { process?: { env?: Record<string, string | u
 const addr = (v: string | undefined) => (v && /^0x[a-fA-F0-9]{40}$/.test(v) ? (v as `0x${string}`) : null)
 
 export const PONSAJI_TOKEN = {
-  /** Paste the contract address here after deploying. Null keeps the app in pre-launch. */
-  address: addr(envOverride.PONSAJI_TOKEN_ADDRESS) as `0x${string}` | null,
+  /** The live token address. An environment override is still available for rehearsals. */
+  address: (addr(envOverride.PONSAJI_TOKEN_ADDRESS) ??
+    '0xDa87419c9933e3dE11Fd439ADB54c5C37E110faE') as `0x${string}`,
+  buyUrl: 'https://www.ponsfamily.com/launchpad/0xDa87419c9933e3dE11Fd439ADB54c5C37E110faE',
   symbol: 'PONSAJI',
   decimals: 18,
 

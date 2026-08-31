@@ -110,7 +110,7 @@ export default function Landing() {
 
             <div className="hero__ctas">
               {isLaunched() ? (
-                <a className="btn-lime hero__buy" href="https://ponslaunchpad.com" target="_blank" rel="noopener noreferrer">
+                <a className="btn-lime hero__buy" href={PONSAJI_TOKEN.buyUrl} target="_blank" rel="noopener noreferrer">
                   BUY ${PONSAJI_TOKEN.symbol} <span aria-hidden="true">→</span>
                 </a>
               ) : (
