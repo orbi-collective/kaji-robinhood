@@ -119,9 +119,9 @@ export default function Landing() {
                   NOT DEPLOYED YET
                 </span>
               )}
-              <a className="btn-outline" href="#how">
+              <Link className="btn-outline" to="/docs#how">
                 HOW IT WORKS
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -307,7 +307,7 @@ export default function Landing() {
               : history?.incomplete
                 ? 'The history could not be read in full from this endpoint, so these figures are shown as unavailable rather than as a partial total.'
                 : `Scanned the last ${Math.round((history?.blocksScanned ?? 0) * 0.101 / 3600)} hours of chain. `}
-            <Link to="/mechanics" className="fold__link">
+            <Link to="/docs" className="fold__link">
               How the split is decided
             </Link>
           </p>

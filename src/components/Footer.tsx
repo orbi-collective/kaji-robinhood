@@ -39,13 +39,13 @@ export default function Footer() {
 
         <nav className="siteFooter__nav" aria-label="Footer">
           <span className="mono-label siteFooter__navHead">THE TOKEN</span>
-          <Link to="/mechanics">How it works</Link>
-          <Link to="/mechanics#ledger">The ledger</Link>
+          <Link to="/docs#how">How it works</Link>
+          <Link to="/docs#ledger">The ledger</Link>
         </nav>
 
         <nav className="siteFooter__nav" aria-label="Footer instrument">
           <span className="mono-label siteFooter__navHead">THE INSTRUMENT</span>
-          {NAV_LINKS.filter((l) => l.to !== '/mechanics').map((l) => (
+          {NAV_LINKS.filter((l) => l.to !== '/docs').map((l) => (
             <Link key={l.to} to={l.to}>
               {l.label.charAt(0) + l.label.slice(1).toLowerCase()}
             </Link>

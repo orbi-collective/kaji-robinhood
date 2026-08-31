@@ -18,10 +18,13 @@ import './TopNav.css'
  * part of the product.
  */
 export const NAV_LINKS = [
-  { label: 'MECHANICS', to: '/mechanics', owns: ['/mechanics', '/payroll'] },
+  { label: 'PAYOUT', to: '/payout', owns: ['/payout'] },
   { label: 'SCANNER', to: '/opportunities', owns: ['/opportunities', '/recipes'] },
   { label: 'VAULT', to: '/vaults/me', owns: ['/vaults'] },
   { label: 'SECURITY', to: '/security', owns: ['/security'] },
+  // Reference material, so it sits at the end rather than in the middle of the
+  // things you can act on.
+  { label: 'DOCS', to: '/docs', owns: ['/docs', '/mechanics', '/payroll'] },
 ] as const
 
 export default function TopNav({ variant = 'app' }: { variant?: 'app' | 'landing' }) {
@@ -75,7 +78,7 @@ export default function TopNav({ variant = 'app' }: { variant?: 'app' | 'landing
                 </svg>
               </span>
             </span>
-            <Link to="/mechanics" className="topNav__cta">
+            <Link to="/docs" className="topNav__cta">
               HOW IT WORKS <span aria-hidden="true">→</span>
             </Link>
           </>

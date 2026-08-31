@@ -9,7 +9,7 @@ import { explorerAddress } from '../lib/chain'
 import { fetchOpportunities } from '../lib/adapters'
 import { readPriceFeed } from '../lib/feeds'
 import { isLaunched, projectPayroll, PONSAJI_TOKEN, verifyPayoutAsset } from '../lib/ponsajiToken'
-import './Mechanics.css'
+import './Docs.css'
 
 /**
  * How you are paid, and the evidence for it.
@@ -25,7 +25,7 @@ import './Mechanics.css'
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n).toLocaleString('en-US')}` : `$${n.toFixed(2)}`)
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
 
-export default function Mechanics() {
+export default function Docs() {
   const { address } = useWalletGate()
   const [lateMinutes, setLateMinutes] = useState(1)
 
@@ -316,7 +316,7 @@ export default function Mechanics() {
           </p>
         </section>
         {!isLaunched() ? (
-          <section className="payroll__pending" role="status">
+          <section className="payroll__pending" id="ledger" role="status">
             <span className="mono-label">PRE-LAUNCH</span>
             <h2 className="payroll__pendingTitle">Not deployed yet</h2>
             <p>
@@ -350,7 +350,7 @@ export default function Mechanics() {
             </dl>
           </section>
         ) : (
-          <section className="payroll__live">
+          <section className="payroll__live" id="ledger">
             <div className="payroll__cells">
               <div className="payrollCell">
                 <span className="mono-label">IN THE ACCOUNT</span>

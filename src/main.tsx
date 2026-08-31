@@ -13,7 +13,8 @@ import Scanner from './pages/Scanner'
 import Recipe from './pages/Recipe'
 import Vault from './pages/Vault'
 import Security from './pages/Security'
-import Mechanics from './pages/Mechanics'
+import Docs from './pages/Docs'
+import Payout from './pages/Payout'
 import NotFound from './pages/NotFound'
 
 const queryClient = new QueryClient({
@@ -41,10 +42,12 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/vaults/:address" element={<Vault />} />
                 <Route path="/vaults" element={<Navigate to="/vaults/me" replace />} />
                 <Route path="/security" element={<Security />} />
-                <Route path="/mechanics" element={<Mechanics />} />
-                {/* The page was called Payroll before it grew to hold the whole
-                    arrangement; the old link should still land somewhere. */}
-                <Route path="/payroll" element={<Navigate to="/mechanics" replace />} />
+                <Route path="/payout" element={<Payout />} />
+                <Route path="/docs" element={<Docs />} />
+                {/* Both earlier names for the docs page. Old links, and anyone's
+                    bookmark of them, should still land somewhere. */}
+                <Route path="/mechanics" element={<Navigate to="/docs" replace />} />
+                <Route path="/payroll" element={<Navigate to="/docs" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </ErrorBoundary>

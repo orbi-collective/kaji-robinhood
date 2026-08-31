@@ -1,0 +1,454 @@
+/* The payout page.
+   Hard rules between panels, no rounded corners, no shadows: the same machined
+   plate language the rest of the product uses. */
+
+.payoutPage__plate {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.payoutPage__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(4, 5, 4, 0.82) 0%, rgba(4, 5, 4, 0.94) 45%, var(--void) 100%);
+  pointer-events: none;
+}
+
+.payoutPage {
+  position: relative;
+  z-index: 2;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 26px 40px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---------- cycle strip ---------- */
+
+.cycleStrip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+  padding: 11px 18px;
+}
+
+.cycleStrip .mono-label {
+  color: var(--chalk);
+}
+
+.cycleStrip__dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--steel);
+}
+
+.cycleStrip__dot--open {
+  background: var(--signal-lime);
+}
+
+.cycleStrip__note {
+  font-size: 12.5px;
+  color: var(--steel);
+  margin-left: auto;
+}
+
+/* ---------- the two figures ---------- */
+
+.payoutHead {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  border: 1px solid var(--steel-border);
+  background: var(--steel-border);
+}
+
+.payoutHead__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 28px 26px;
+  background: var(--panel-black);
+  min-width: 0;
+}
+
+.payoutHead__key {
+  color: var(--steel);
+}
+
+.payoutHead__value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(38px, 5vw, 62px);
+  line-height: 0.96;
+  letter-spacing: -0.01em;
+  color: var(--chalk);
+  word-break: break-word;
+}
+
+.payoutHead__value--muted {
+  color: var(--steel);
+  font-size: clamp(26px, 3vw, 38px);
+}
+
+.payoutHead__unit {
+  font-size: 0.46em;
+  letter-spacing: 0.06em;
+  color: var(--steel-light);
+}
+
+.payoutHead__sub {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--steel-light);
+  max-width: 46ch;
+}
+
+.payoutHead__link {
+  color: var(--signal-lime);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- the curve ---------- */
+
+.payoutChart {
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+  padding: 20px 24px 22px;
+}
+
+.payoutChart__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.payoutChart__title {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  color: var(--chalk);
+  margin: 0;
+  font-weight: 500;
+}
+
+.payoutChart__times {
+  color: var(--signal-lime);
+}
+
+.payoutChart__flag {
+  color: var(--steel);
+}
+
+.curve {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.curve__grid {
+  stroke: rgba(38, 42, 37, 0.85);
+  stroke-width: 1;
+}
+
+.curve__line {
+  fill: none;
+  stroke: var(--signal-lime);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.curve__axis {
+  fill: var(--steel);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.curve__leader {
+  stroke: var(--steel);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.curve__buy {
+  fill: var(--signal-lime);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+/* Red, and only here: a reduction is the one event that destroys accrued value. */
+.curve__reset {
+  stroke: #ff5c3a;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.curve__resetDot {
+  fill: var(--void);
+  stroke: #ff5c3a;
+  stroke-width: 2;
+}
+
+.curve__example {
+  fill: var(--steel);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.11em;
+}
+
+.curve__axisTitle {
+  fill: var(--steel);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+.curve__resetLabel {
+  fill: #ff5c3a;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.11em;
+}
+
+.payoutChart__legend {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--steel-light);
+  max-width: 104ch;
+}
+
+.payoutChart__swatch {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  background: var(--signal-lime);
+  transform: translateY(1px);
+}
+
+.payoutChart__disclaimer {
+  color: var(--chalk);
+  font-weight: 500;
+}
+
+/* ---------- the three readings ---------- */
+
+.payoutFacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  border: 1px solid var(--steel-border);
+  background: var(--steel-border);
+}
+
+.payoutFacts__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 24px 20px;
+  background: var(--panel-black);
+  min-width: 0;
+}
+
+.payoutFacts__cell .mono-label {
+  color: var(--steel);
+}
+
+.payoutFacts__value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--chalk);
+}
+
+.payoutFacts__unit {
+  font-size: 0.44em;
+  letter-spacing: 0.08em;
+  color: var(--steel);
+}
+
+/* ---------- arithmetic and record ---------- */
+
+.payoutSplit {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.shareBox,
+.runsBox {
+  border: 1px solid var(--steel-border);
+  background: var(--panel-black);
+  padding: 20px 24px 22px;
+  min-width: 0;
+}
+
+.shareBox__h,
+.runsBox__h {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  font-weight: 500;
+  color: var(--steel-light);
+  margin: 0 0 16px;
+}
+
+.shareBox__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.shareBox__formula {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border: 1px solid var(--steel);
+  padding: 18px 20px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(15px, 1.7vw, 21px);
+  letter-spacing: 0.02em;
+  color: var(--chalk);
+  text-align: center;
+}
+
+.shareBox__divide {
+  color: var(--signal-lime);
+  font-size: 1.3em;
+}
+
+.shareBox__note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--steel-light);
+}
+
+.shareBox__foot {
+  margin: 18px 0 0;
+  color: var(--signal-lime);
+}
+
+/* ---------- the table ---------- */
+
+.runsBox__empty,
+.runsBox__hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--steel-light);
+}
+
+.runsBox__hint {
+  margin-top: 14px;
+  color: var(--steel);
+}
+
+.runsTable {
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+}
+
+.runsTable__head,
+.runsTable__row {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 0.7fr 0.9fr 1fr;
+  gap: 12px;
+  align-items: baseline;
+  min-width: 520px;
+  padding: 10px 0;
+}
+
+.runsTable__head {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.11em;
+  color: var(--steel);
+  border-bottom: 1px solid var(--steel-border);
+}
+
+.runsTable__row {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--steel-light);
+  border-bottom: 1px solid rgba(38, 42, 37, 0.55);
+}
+
+.runsTable__row:last-child {
+  border-bottom: none;
+}
+
+.runsTable__mine {
+  color: var(--signal-lime);
+}
+
+/* ---------- foot ---------- */
+
+.payoutPage__foot {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--steel);
+  max-width: 96ch;
+}
+
+.payoutPage__link {
+  color: var(--signal-lime);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 1000px) {
+  .payoutHead,
+  .payoutSplit {
+    grid-template-columns: 1fr;
+  }
+
+  .payoutSplit {
+    gap: 1px;
+  }
+}
+
+@media (max-width: 640px) {
+  .payoutPage {
+    padding: 20px 18px 44px;
+    gap: 14px;
+  }
+
+  .payoutHead__cell {
+    padding: 18px 18px 20px;
+  }
+
+  .payoutChart,
+  .shareBox,
+  .runsBox {
+    padding: 16px 16px 18px;
+  }
+}

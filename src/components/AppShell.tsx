@@ -41,10 +41,30 @@ export function AppShell({ children, plate }: { children: ReactNode; plate?: Rea
 
 /** Moves focus to the page heading on navigation so keyboard users don't restart at the top of the nav. */
 export function RouteFocus() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
   const first = useRef(true)
 
   useEffect(() => {
+    /**
+     * A hash goes to its section; everything else goes to the top.
+     *
+     * React Router does not scroll to an anchor on navigation, so a link like
+     * /docs#how changed the address bar and left the reader at the top of the
+     * page, which is why the landing page's "how it works" button appeared to
+     * do nothing. The section is focused as well as scrolled to, so a keyboard
+     * carries on from there rather than from the top of the nav.
+     */
+    if (hash) {
+      const target = document.getElementById(hash.slice(1))
+      if (target) {
+        target.scrollIntoView({ block: 'start' })
+        target.setAttribute('tabindex', '-1')
+        target.focus({ preventScroll: true })
+        first.current = false
+        return
+      }
+    }
+
     if (first.current) {
       first.current = false
       return
@@ -52,7 +72,7 @@ export function RouteFocus() {
     const main = document.getElementById('main')
     main?.focus({ preventScroll: true })
     window.scrollTo({ top: 0, behavior: 'auto' })
-  }, [pathname])
+  }, [pathname, hash])
 
   return null
 }

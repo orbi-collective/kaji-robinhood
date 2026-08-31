@@ -723,6 +723,20 @@ export async function readAccountBalance(): Promise<AccountBalance | null> {
 /* What has actually been paid                                         */
 /* ------------------------------------------------------------------ */
 
+/** One settlement: a burst of payouts that left the account together. */
+export type DistributionRun = {
+  /** Unix ms, from the block that carried the run. */
+  at: number
+  /** Payout asset sent in this run, in whole units. */
+  units: number
+  /** Distinct wallets paid. */
+  recipients: number
+  /** What the viewing wallet received, when one was supplied. */
+  viewerUnits: number | null
+  /** The viewing wallet's share of this run. Null when no viewer, or an empty run. */
+  viewerShare: number | null
+}
+
 export type DistributionHistory = {
   /** Payout asset actually sent, in whole units. */
   totalUnits: number
@@ -739,6 +753,8 @@ export type DistributionHistory = {
   blocksScanned: number
   /** Set when the history could not be read in full. */
   incomplete: boolean
+  /** Individual settlements, newest first. Empty until one has happened. */
+  recent: DistributionRun[]
 }
 
 const EMPTY_HISTORY: DistributionHistory = {
@@ -750,6 +766,7 @@ const EMPTY_HISTORY: DistributionHistory = {
   lastRunAt: null,
   blocksScanned: 0,
   incomplete: false,
+  recent: [],
 }
 
 /**
@@ -766,6 +783,8 @@ const EMPTY_HISTORY: DistributionHistory = {
 export async function readDistributionHistory(
   hoursBack = 72,
   signal?: AbortSignal,
+  /** When given, each run also reports what this wallet received. */
+  viewer?: `0x${string}` | null,
 ): Promise<DistributionHistory> {
   const account = PONSAJI_TOKEN.payrollAccount
   if (!account) return EMPTY_HISTORY
@@ -775,56 +794,72 @@ export async function readDistributionHistory(
     const span = BigInt(Math.round((hoursBack * 3600) / SECONDS_PER_BLOCK))
     const from = head > span ? head - span : 0n
 
-    const [startBlock, endBlock] = await Promise.all([
-      publicClient.getBlock({ blockNumber: from }),
-      publicClient.getBlock({ blockNumber: head }),
-    ])
-    const startMs = Number(startBlock.timestamp) * 1000
-    const msPerBlock = (Number(endBlock.timestamp) * 1000 - startMs) / (Number(span) || 1)
-
     const logs = await scanTransfers(PONSAJI_TOKEN.payoutAsset.address, from, head, signal, { from: account })
     if (logs === null) return { ...EMPTY_HISTORY, blocksScanned: Number(span), incomplete: true }
 
     logs.sort((a, b) => Number((a.blockNumber ?? 0n) - (b.blockNumber ?? 0n)))
 
+    // Settlements are few, so their times are measured rather than estimated
+    // between anchors. A run's date is stamped on it here; getting it from a
+    // straight line would put it minutes from when it happened.
+    const timeOf = await timestampIndex([...new Set(logs.map((l) => l.blockNumber ?? from))], from, head, signal)
+
     const wallets = new Set<string>()
-    let totalRaw = 0n
-    let runs = 0
-    let largestRun = 0n
-    let currentRun = 0n
-    let previousBlock: bigint | null = null
+    const decimals = PONSAJI_TOKEN.payoutAsset.decimals
+    const holder = viewer?.toLowerCase() ?? null
     // A settlement spans seconds; the next is the better part of an hour away.
     const gap = BigInt(Math.round(600 / SECONDS_PER_BLOCK))
 
+    type Bucket = { at: number; raw: bigint; to: Set<string>; viewerRaw: bigint }
+    const buckets: Bucket[] = []
+    let totalRaw = 0n
+    let previousBlock: bigint | null = null
+
     for (const log of logs) {
       const value = log.args.value ?? 0n
-      const block = log.blockNumber ?? 0n
+      const block = log.blockNumber ?? from
+      const to = (log.args.to as string).toLowerCase()
       totalRaw += value
-      wallets.add((log.args.to as string).toLowerCase())
+      wallets.add(to)
 
       if (previousBlock === null || block - previousBlock > gap) {
-        if (currentRun > largestRun) largestRun = currentRun
-        currentRun = 0n
-        runs += 1
+        buckets.push({ at: timeOf(block), raw: 0n, to: new Set(), viewerRaw: 0n })
       }
-      currentRun += value
+      const run = buckets[buckets.length - 1]
+      run.raw += value
+      run.to.add(to)
+      if (holder && to === holder) run.viewerRaw += value
       previousBlock = block
     }
-    if (currentRun > largestRun) largestRun = currentRun
 
-    const decimals = PONSAJI_TOKEN.payoutAsset.decimals
     const price = await readPayoutAssetPriceUsd().catch(() => null)
     const totalUnits = Number(formatUnits(totalRaw, decimals))
+    const largestRun = buckets.reduce((m, b) => (b.raw > m ? b.raw : m), 0n)
+
+    const recent: DistributionRun[] = buckets
+      .map((b) => {
+        const units = Number(formatUnits(b.raw, decimals))
+        const viewerUnits = holder ? Number(formatUnits(b.viewerRaw, decimals)) : null
+        return {
+          at: b.at,
+          units,
+          recipients: b.to.size,
+          viewerUnits,
+          viewerShare: viewerUnits !== null && units > 0 ? viewerUnits / units : null,
+        }
+      })
+      .reverse()
 
     return {
       totalUnits,
       totalUsd: price !== null ? totalUnits * price : null,
-      runs,
+      runs: buckets.length,
       walletsPaid: wallets.size,
       largestRunUnits: Number(formatUnits(largestRun, decimals)),
-      lastRunAt: previousBlock !== null ? startMs + Number(previousBlock - from) * msPerBlock : null,
+      lastRunAt: buckets.length ? buckets[buckets.length - 1].at : null,
       blocksScanned: Number(span),
       incomplete: false,
+      recent,
     }
   } catch {
     return { ...EMPTY_HISTORY, incomplete: true }
@@ -919,5 +954,131 @@ export async function projectPayroll(ethUsd: number | null, signal?: AbortSignal
         : accountUsd === null
           ? `${PONSAJI_TOKEN.payoutAsset.symbol} has no readable price, so the account cannot be valued.`
           : null,
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* One wallet's ledger                                                 */
+/* ------------------------------------------------------------------ */
+
+export type BalancePoint = {
+  at: number
+  /** Balance in whole tokens after this transfer. */
+  balance: number
+  /** Signed change that produced it. Negative means the clock restarted here. */
+  change: number
+}
+
+export type WalletLedger = {
+  points: BalancePoint[]
+  /** Balance now, in whole tokens. */
+  balance: number
+  /** Accrued token-minutes since the last reduction, at `readAt`. */
+  service: number
+  /** When the clock last restarted. Null when the wallet never held. */
+  serviceStart: number | null
+  /** Minutes of unbroken service. */
+  minutesHeld: number
+  /** Chain time the figures were taken at, so nothing is measured off a local clock. */
+  readAt: number
+  /** Set when the wallet's history could not be read in full. */
+  incomplete: boolean
+}
+
+/**
+ * One wallet's balance over time, and the service it has accrued.
+ *
+ * Scanned by the two indexed sides of Transfer rather than by replaying the
+ * whole ledger: a holder looking at their own page should not pay for a scan of
+ * everybody's. The arithmetic deliberately matches computeService, because a
+ * holder checking their own figure against a run must not find two answers.
+ */
+export async function readWalletLedger(
+  wallet: `0x${string}`,
+  signal?: AbortSignal,
+): Promise<WalletLedger | null> {
+  const token = PONSAJI_TOKEN.address
+  if (!token) return null
+
+  const empty = (incomplete: boolean, readAt: number): WalletLedger => ({
+    points: [],
+    balance: 0,
+    service: 0,
+    serviceStart: null,
+    minutesHeld: 0,
+    readAt,
+    incomplete,
+  })
+
+  try {
+    const head = await publicClient.getBlockNumber()
+    const headBlock = await publicClient.getBlock({ blockNumber: head })
+    const readAt = Number(headBlock.timestamp) * 1000
+
+    const launchedAt = PONSAJI_TOKEN.launchedAt ?? readAt
+    const sinceLaunch = Math.max(0, (readAt - launchedAt) / 1000)
+    const span = BigInt(Math.min(2_000_000, Math.ceil(sinceLaunch / SECONDS_PER_BLOCK) + 2_000))
+    const from = head > span ? head - span : 0n
+
+    const [sent, received] = await Promise.all([
+      scanTransfers(token, from, head, signal, { from: wallet }),
+      scanTransfers(token, from, head, signal, { to: wallet }),
+    ])
+    if (sent === null || received === null) return empty(true, readAt)
+
+    const logs = [...sent, ...received].sort((a, b) => {
+      const d = Number((a.blockNumber ?? 0n) - (b.blockNumber ?? 0n))
+      return d !== 0 ? d : (a.logIndex ?? 0) - (b.logIndex ?? 0)
+    })
+    if (logs.length === 0) return empty(false, readAt)
+
+    const timeOf = await timestampIndex([...new Set(logs.map((l) => l.blockNumber ?? from))], from, head, signal)
+
+    const decimals = PONSAJI_TOKEN.decimals
+    const self = wallet.toLowerCase()
+    const points: BalancePoint[] = []
+    let raw = 0n
+    let service = 0
+    let since: number | null = null
+    let last = 0
+
+    for (const log of logs) {
+      const value = log.args.value ?? 0n
+      const outgoing = (log.args.from as string).toLowerCase() === self
+      const incoming = (log.args.to as string).toLowerCase() === self
+      // A transfer to yourself nets to nothing; charging it as a reduction
+      // would restart the clock for a move that changed no balance.
+      if (outgoing && incoming) continue
+
+      const at = timeOf(log.blockNumber ?? from)
+      const before = Number(formatUnits(raw, decimals))
+      raw = outgoing ? raw - value : raw + value
+      const after = Number(formatUnits(raw < 0n ? 0n : raw, decimals))
+
+      if (outgoing) {
+        // Any reduction forfeits accrued service and restarts the clock.
+        service = 0
+        since = at
+      } else {
+        if (since !== null) service += before * ((at - since) / 60_000)
+        since = at
+      }
+      points.push({ at, balance: after, change: after - before })
+      last = at
+    }
+
+    const balance = Number(formatUnits(raw < 0n ? 0n : raw, decimals))
+    const start = since ?? last
+    return {
+      points,
+      balance,
+      service: service + balance * ((readAt - start) / 60_000),
+      serviceStart: points.length ? start : null,
+      minutesHeld: (readAt - start) / 60_000,
+      readAt,
+      incomplete: false,
+    }
+  } catch {
+    return null
   }
 }
