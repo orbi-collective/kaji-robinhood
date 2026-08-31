@@ -777,18 +777,93 @@ const EMPTY_HISTORY: DistributionHistory = {
 
 export const PREVIEW_WALLET = '0x1111111111111111111111111111111111111111' as `0x${string}`
 
-function previewDistributionHistory(viewer?: `0x${string}` | null): DistributionHistory {
-  void viewer
+const PREVIEW_STORAGE_KEY = 'ponsaji-preview-started-at-v2'
+const PREVIEW_SESSION_FALLBACK = Date.now()
+const PREVIEW_FIRST_CYCLE_MS = 3 * 60 * 60_000
+const PREVIEW_NEXT_CYCLE_MS = 60 * 60_000
+
+function previewSessionStartedAt(): number {
+  if (typeof window === 'undefined') return PREVIEW_SESSION_FALLBACK
+  try {
+    const stored = Number(window.localStorage.getItem(PREVIEW_STORAGE_KEY))
+    if (Number.isFinite(stored) && stored > 0) return stored
+    const startedAt = Date.now()
+    window.localStorage.setItem(PREVIEW_STORAGE_KEY, String(startedAt))
+    return startedAt
+  } catch {
+    return PREVIEW_SESSION_FALLBACK
+  }
+}
+
+function previewTiming(now = Date.now()) {
+  const startedAt = previewSessionStartedAt()
+  const firstClosesAt = startedAt + PREVIEW_FIRST_CYCLE_MS
+  if (now < firstClosesAt) {
+    return { startedAt, cycleStartedAt: startedAt - 22.4 * 60_000, closesAt: firstClosesAt, index: 1, completed: 0 }
+  }
+
+  const elapsedAfterFirst = now - firstClosesAt
+  const completed = 1 + Math.floor(elapsedAfterFirst / PREVIEW_NEXT_CYCLE_MS)
+  const cycleStartedAt = firstClosesAt + (completed - 1) * PREVIEW_NEXT_CYCLE_MS
   return {
-    totalUnits: 0,
-    totalUsd: 0,
-    runs: 0,
-    walletsPaid: 0,
-    largestRunUnits: 0,
-    lastRunAt: null,
+    startedAt,
+    cycleStartedAt,
+    closesAt: cycleStartedAt + PREVIEW_NEXT_CYCLE_MS,
+    index: completed + 1,
+    completed,
+  }
+}
+
+export function formatCycleCountdown(closesAt: number | null, now = Date.now()): string {
+  if (closesAt === null) return '--:--:--'
+  const seconds = Math.max(0, Math.ceil((closesAt - now) / 1000))
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainder = seconds % 60
+  return [hours, minutes, remainder].map((part) => String(part).padStart(2, '0')).join(':')
+}
+
+function previewDistributionHistory(viewer?: `0x${string}` | null): DistributionHistory {
+  const { completed, startedAt } = previewTiming()
+  if (completed === 0) {
+    return {
+      totalUnits: 0,
+      totalUsd: 0,
+      runs: 0,
+      walletsPaid: 0,
+      largestRunUnits: 0,
+      lastRunAt: null,
+      blocksScanned: Math.round((72 * 3600) / SECONDS_PER_BLOCK),
+      incomplete: false,
+      recent: [],
+    }
+  }
+
+  const firstClosesAt = startedAt + PREVIEW_FIRST_CYCLE_MS
+  const allRuns = Array.from({ length: completed }, (_, index) => {
+    const units = 0.5006 + ((index * 37) % 19) / 1000
+    const viewerShare = viewer ? 0.01726 + ((index * 7) % 5) / 10_000 : null
+    return {
+      at: firstClosesAt + index * PREVIEW_NEXT_CYCLE_MS,
+      units,
+      recipients: 31 + Math.min(index * 3, 42),
+      viewerShare,
+      viewerUnits: viewerShare === null ? null : units * viewerShare,
+    }
+  })
+  const totalUnits = allRuns.reduce((sum, run) => sum + run.units, 0)
+  const recent = [...allRuns].reverse().slice(0, 6)
+
+  return {
+    totalUnits,
+    totalUsd: totalUnits * 207.41,
+    runs: completed,
+    walletsPaid: allRuns[allRuns.length - 1].recipients,
+    largestRunUnits: Math.max(...allRuns.map((run) => run.units)),
+    lastRunAt: recent[0].at,
     blocksScanned: Math.round((72 * 3600) / SECONDS_PER_BLOCK),
     incomplete: false,
-    recent: [],
+    recent,
   }
 }
 
@@ -908,12 +983,14 @@ export type PayrollState = {
 
 function previewPayrollState(): PayrollState {
   const now = Date.now()
+  const timing = previewTiming(now)
+  const elapsedMinutes = Math.max(0, (now - timing.startedAt) / 60_000)
   const base = Array.from({ length: 31 }, (_, index) => {
     const wallet = index === 0
       ? PREVIEW_WALLET
       : (`0x${(index + 4096).toString(16).padStart(40, '0')}` as `0x${string}`)
     const balance = index === 0 ? 420_000 : 80_000 + ((index * 191_923) % 1_800_000)
-    const minutesHeld = index === 0 ? 22.4 : 4 + ((index * 7.7) % 25)
+    const minutesHeld = (index === 0 ? 22.4 : 4 + ((index * 7.7) % 25)) + elapsedMinutes
     return {
       wallet,
       balance,
@@ -923,7 +1000,11 @@ function previewPayrollState(): PayrollState {
     }
   })
   const totalService = base.reduce((sum, record) => sum + record.service, 0)
-  const accountUsd = 0.2846 * 207.41
+  const secondsInCycle = Math.max(0, (now - timing.cycleStartedAt) / 1000)
+  const accountUnits = timing.completed === 0
+    ? 0.2846 + (Math.max(0, now - timing.startedAt) / 1000) * 0.00002
+    : 0.006 + secondsInCycle * 0.00002
+  const accountUsd = accountUnits * 207.41
   const records = base
     .map((record) => {
       const share = record.service / totalService
@@ -933,11 +1014,11 @@ function previewPayrollState(): PayrollState {
 
   return {
     market: null,
-    cycle: { index: 1, closesAt: now + 3 * 60 * 60_000 },
-    account: { units: 0.2846, usd: accountUsd, assetPriceUsd: 207.41 },
+    cycle: { index: timing.index, closesAt: timing.closesAt },
+    account: { units: accountUnits, usd: accountUsd, assetPriceUsd: 207.41 },
     accountUsd,
     projected: { closedAt: now, totalService, records, accountUsd, zeroServiceWallets: 3 },
-    ledgerEvents: 94,
+    ledgerEvents: 94 + Math.floor(elapsedMinutes / 3),
     blockedBy: null,
   }
 }
@@ -1051,18 +1132,21 @@ export type WalletLedger = {
 function previewWalletLedger(): WalletLedger {
   const now = Date.now()
   const minute = 60_000
+  const { startedAt } = previewTiming(now)
+  const firstBuyAt = startedAt - 22.4 * minute
+  const secondBuyAt = startedAt - 11 * minute
   const points: BalancePoint[] = [
-    { at: now - 22.4 * minute, balance: 300_000, change: 300_000 },
-    { at: now - 11 * minute, balance: 420_000, change: 120_000 },
+    { at: firstBuyAt, balance: 300_000, change: 300_000 },
+    { at: secondBuyAt, balance: 420_000, change: 120_000 },
   ]
-  const service = 300_000 * 11.4 + 420_000 * 11
+  const service = 300_000 * 11.4 + 420_000 * Math.max(0, (now - secondBuyAt) / minute)
 
   return {
     points,
     balance: 420_000,
     service,
-    serviceStart: now - 22.4 * minute,
-    minutesHeld: 22.4,
+    serviceStart: firstBuyAt,
+    minutesHeld: Math.max(0, (now - firstBuyAt) / minute),
     readAt: now,
     incomplete: false,
   }

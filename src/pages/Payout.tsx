@@ -7,6 +7,7 @@ import { explorerAddress } from '../lib/chain'
 import { readPriceFeed } from '../lib/feeds'
 import {
   PONSAJI_TOKEN,
+  formatCycleCountdown,
   isLaunched,
   projectPayroll,
   readDistributionHistory,
@@ -249,17 +250,20 @@ export default function Payout() {
   const { data: state } = useQuery({
     queryKey: ['payroll'],
     queryFn: async ({ signal }) => {
+      if (PONSAJI_TOKEN.previewMode) return projectPayroll(null, signal)
       const eth = await readPriceFeed('ETH_USD').catch(() => null)
       return projectPayroll(eth?.price ?? null, signal)
     },
     enabled: launched,
     staleTime: 30_000,
+    refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
   })
 
   const { data: history } = useQuery({
     queryKey: ['distribution-history', viewer],
     queryFn: ({ signal }) => readDistributionHistory(72, signal, viewer),
     staleTime: 60_000,
+    refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
   })
 
   const { data: ledger, isPending: ledgerPending } = useQuery({
@@ -267,6 +271,7 @@ export default function Payout() {
     queryFn: ({ signal }) => readWalletLedger(viewer, signal),
     enabled: viewerActive && launched,
     staleTime: 30_000,
+    refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
   })
 
   const totalService = state?.projected?.totalService ?? 0
@@ -299,7 +304,7 @@ export default function Payout() {
           <span className="cycleStrip__note">
             {state?.cycle
               ? PONSAJI_TOKEN.previewMode
-                ? 'First distribution in approximately 3 hours.'
+                ? `${state.cycle.index === 1 ? 'First' : 'Next'} distribution in ${formatCycleCountdown(state.cycle.closesAt)}.`
                 : 'The closing moment is seeded and never published.'
               : 'Cycles begin at the launch instant, read from the pool itself.'}
           </span>

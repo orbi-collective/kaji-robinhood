@@ -8,7 +8,7 @@ import { isSybilInvariant, shareOfLateEntry } from '../lib/payroll'
 import { explorerAddress } from '../lib/chain'
 import { fetchOpportunities } from '../lib/adapters'
 import { readPriceFeed } from '../lib/feeds'
-import { isLaunched, projectPayroll, PONSAJI_TOKEN, PREVIEW_WALLET, verifyPayoutAsset } from '../lib/ponsajiToken'
+import { formatCycleCountdown, isLaunched, projectPayroll, PONSAJI_TOKEN, PREVIEW_WALLET, verifyPayoutAsset } from '../lib/ponsajiToken'
 import './Docs.css'
 
 /**
@@ -50,11 +50,13 @@ export default function Docs() {
   const { data: state, isFetching } = useQuery({
     queryKey: ['payroll'],
     queryFn: async ({ signal }) => {
+      if (PONSAJI_TOKEN.previewMode) return projectPayroll(null, signal)
       const eth = await readPriceFeed('ETH_USD').catch(() => null)
       return projectPayroll(eth?.price ?? null, signal)
     },
     enabled: isLaunched(),
     staleTime: 30_000,
+    refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
   })
 
   const mine = useMemo(
@@ -389,7 +391,9 @@ export default function Docs() {
                 <span className="payrollCell__value">{state?.cycle ? `#${state.cycle.index}` : '—'}</span>
                 <span className="payrollCell__note">
                   {/* Never a countdown: a published moment is one a late buyer trades around. */}
-                  {PONSAJI_TOKEN.previewMode ? 'first distribution in approximately 3 hours' : 'length is seeded and not published'}
+                  {PONSAJI_TOKEN.previewMode && state?.cycle
+                    ? `${state.cycle.index === 1 ? 'first' : 'next'} distribution in ${formatCycleCountdown(state.cycle.closesAt)}`
+                    : 'length is seeded and not published'}
                 </span>
               </div>
             </div>

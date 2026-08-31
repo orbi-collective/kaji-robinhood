@@ -14,6 +14,7 @@ import {
   projectPayroll,
   readDistributionHistory,
   readPayoutAssetPriceUsd,
+  formatCycleCountdown,
   PONSAJI_TOKEN,
   PREVIEW_WALLET,
 } from '../lib/ponsajiToken'
@@ -42,11 +43,13 @@ export default function Landing() {
   const { data: state } = useQuery({
     queryKey: ['payroll'],
     queryFn: async ({ signal }) => {
+      if (PONSAJI_TOKEN.previewMode) return projectPayroll(null, signal)
       const eth = await readPriceFeed('ETH_USD').catch(() => null)
       return projectPayroll(eth?.price ?? null, signal)
     },
     enabled: isLaunched(),
     staleTime: 30_000,
+    refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
   })
 
   // The scanner's own readings, used here as evidence rather than as a feature
@@ -72,6 +75,7 @@ export default function Landing() {
     queryKey: ['distribution-history'],
     queryFn: ({ signal }) => readDistributionHistory(72, signal),
     staleTime: 120_000,
+    refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
   })
 
   const mine = useMemo(
@@ -163,7 +167,9 @@ export default function Landing() {
                   <div>
                     <span className="mono-label">CYCLE</span>
                     <span className="board__cell">
-                      {state?.cycle ? `#${state.cycle.index}${PONSAJI_TOKEN.previewMode ? ' · ~3H' : ''}` : '—'}
+                      {state?.cycle
+                        ? `#${state.cycle.index}${PONSAJI_TOKEN.previewMode ? ` · ${formatCycleCountdown(state.cycle.closesAt)}` : ''}`
+                        : '—'}
                     </span>
                   </div>
                   <div>
