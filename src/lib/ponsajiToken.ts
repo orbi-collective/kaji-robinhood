@@ -927,7 +927,7 @@ function previewDistributionHistory(viewer?: `0x${string}` | null): Distribution
   const allRuns = Array.from({ length: completed }, (_, index) => {
     const cycleStartedAt = index === 0 ? startedAt : firstClosesAt + (index - 1) * PREVIEW_NEXT_CYCLE_MS
     const cycleClosesAt = index === 0 ? firstClosesAt : cycleStartedAt + PREVIEW_NEXT_CYCLE_MS
-    const units = (index === 0 ? 0.0864 : 0.006) + previewFeesAccrued(cycleStartedAt, cycleClosesAt)
+    const units = (index === 0 ? 12.864 : 0.006) + previewFeesAccrued(cycleStartedAt, cycleClosesAt)
     const viewerShare = viewer ? 0.0132 + ((index * 7) % 5) / 10_000 : null
     return {
       at: firstClosesAt + index * PREVIEW_NEXT_CYCLE_MS,
@@ -1093,7 +1093,7 @@ async function previewPayrollState(signal?: AbortSignal): Promise<PayrollState> 
   })
   const totalService = base.reduce((sum, record) => sum + record.service, 0)
   const accountUnits = timing.completed === 0
-    ? 0.0864 + previewFeesAccrued(timing.startedAt, now)
+    ? 12.864 + previewFeesAccrued(timing.startedAt, now)
     : 0.006 + previewFeesAccrued(timing.cycleStartedAt, now)
   const accountUsd = accountUnits * 140
   const records = base
