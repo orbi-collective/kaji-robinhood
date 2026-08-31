@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
@@ -7,13 +7,10 @@ import { explorerAddress } from '../lib/chain'
 import { readPriceFeed } from '../lib/feeds'
 import {
   PONSAJI_TOKEN,
-  formatCycleCountdown,
-  previewAccountBalance,
   isLaunched,
   projectPayroll,
   readDistributionHistory,
   readWalletLedger,
-  PREVIEW_WALLET,
   type BalancePoint,
 } from '../lib/ponsajiToken'
 import './Payout.css'
@@ -245,44 +242,28 @@ function Curve({ points, readAt, example }: { points: BalancePoint[]; readAt: nu
 export default function Payout() {
   const { address, isConnected } = useWalletGate()
   const launched = isLaunched()
-  const viewer = address ?? PREVIEW_WALLET
-  const viewerActive = isConnected || PONSAJI_TOKEN.previewMode
-  const [, setPreviewTick] = useState(0)
-
-  useEffect(() => {
-    if (!PONSAJI_TOKEN.previewMode) return
-    const timer = window.setInterval(() => setPreviewTick((tick) => tick + 1), 1_000)
-    return () => window.clearInterval(timer)
-  }, [])
 
   const { data: state } = useQuery({
     queryKey: ['payroll'],
     queryFn: async ({ signal }) => {
-      if (PONSAJI_TOKEN.previewMode) return projectPayroll(null, signal)
       const eth = await readPriceFeed('ETH_USD').catch(() => null)
       return projectPayroll(eth?.price ?? null, signal)
     },
     enabled: launched,
     staleTime: 30_000,
-    refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
-    refetchIntervalInBackground: PONSAJI_TOKEN.previewMode,
   })
 
   const { data: history } = useQuery({
-    queryKey: ['distribution-history', viewer],
-    queryFn: ({ signal }) => readDistributionHistory(72, signal, viewer),
+    queryKey: ['distribution-history', address ?? null],
+    queryFn: ({ signal }) => readDistributionHistory(72, signal, address ?? null),
     staleTime: 60_000,
-    refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
-    refetchIntervalInBackground: PONSAJI_TOKEN.previewMode,
   })
 
   const { data: ledger, isPending: ledgerPending } = useQuery({
-    queryKey: ['wallet-ledger', viewer],
-    queryFn: ({ signal }) => readWalletLedger(viewer, signal),
-    enabled: viewerActive && launched,
+    queryKey: ['wallet-ledger', address],
+    queryFn: ({ signal }) => readWalletLedger(address as `0x${string}`, signal),
+    enabled: Boolean(address) && launched,
     staleTime: 30_000,
-    refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
-    refetchIntervalInBackground: PONSAJI_TOKEN.previewMode,
   })
 
   const totalService = state?.projected?.totalService ?? 0
@@ -291,7 +272,7 @@ export default function Payout() {
   const points = hasCurve ? ledger!.points : EXAMPLE
   const readAt = hasCurve ? ledger!.readAt : EXAMPLE[EXAMPLE.length - 1].at + 20 * 60_000
 
-  const account = PONSAJI_TOKEN.previewMode ? previewAccountBalance() : state?.account ?? null
+  const account = state?.account ?? null
   const runs = history?.recent ?? []
 
   // No scene plate here. This is an instrument panel: a video behind live
@@ -314,9 +295,7 @@ export default function Payout() {
           </span>
           <span className="cycleStrip__note">
             {state?.cycle
-              ? PONSAJI_TOKEN.previewMode
-                ? `${state.cycle.index === 1 ? 'First' : 'Next'} distribution in ${formatCycleCountdown(state.cycle.closesAt)}.`
-                : 'The closing moment is seeded and never published.'
+              ? 'The closing moment is seeded and never published.'
               : 'Cycles begin at the launch instant, read from the pool itself.'}
           </span>
         </div>
@@ -330,7 +309,7 @@ export default function Payout() {
                 <span className="payoutHead__value payoutHead__value--muted">NOT DEPLOYED</span>
                 <span className="payoutHead__sub">There is no ledger to accrue against yet.</span>
               </>
-            ) : !viewerActive ? (
+            ) : !isConnected ? (
               <>
                 <span className="payoutHead__value payoutHead__value--muted">NO WALLET</span>
                 <span className="payoutHead__sub">Connect a wallet to read its service from the chain.</span>
@@ -408,7 +387,7 @@ export default function Payout() {
             </h1>
             {!hasCurve && (
               <span className="payoutChart__flag mono-label">
-                {launched && viewerActive ? 'NO TRANSFERS FOR THIS WALLET' : 'WORKED EXAMPLE'}
+                {launched && isConnected ? 'NO TRANSFERS FOR THIS WALLET' : 'WORKED EXAMPLE'}
               </span>
             )}
           </div>
@@ -508,7 +487,7 @@ export default function Payout() {
                 ))}
               </div>
             )}
-            {runs.length > 0 && !viewerActive && (
+            {runs.length > 0 && !isConnected && (
               <p className="runsBox__hint">Connect a wallet to see what it received in each run.</p>
             )}
           </section>

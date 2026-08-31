@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import ScenePlate from '../components/ScenePlate'
@@ -14,10 +14,7 @@ import {
   projectPayroll,
   readDistributionHistory,
   readPayoutAssetPriceUsd,
-  formatCycleCountdown,
-  previewAccountBalance,
   PONSAJI_TOKEN,
-  PREVIEW_WALLET,
 } from '../lib/ponsajiToken'
 import './Landing.css'
 
@@ -40,25 +37,15 @@ const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
 
 export default function Landing() {
   const { address } = useWalletGate()
-  const [, setPreviewTick] = useState(0)
-
-  useEffect(() => {
-    if (!PONSAJI_TOKEN.previewMode) return
-    const timer = window.setInterval(() => setPreviewTick((tick) => tick + 1), 1_000)
-    return () => window.clearInterval(timer)
-  }, [])
 
   const { data: state } = useQuery({
     queryKey: ['payroll'],
     queryFn: async ({ signal }) => {
-      if (PONSAJI_TOKEN.previewMode) return projectPayroll(null, signal)
       const eth = await readPriceFeed('ETH_USD').catch(() => null)
       return projectPayroll(eth?.price ?? null, signal)
     },
     enabled: isLaunched(),
     staleTime: 30_000,
-    refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
-    refetchIntervalInBackground: PONSAJI_TOKEN.previewMode,
   })
 
   // The scanner's own readings, used here as evidence rather than as a feature
@@ -84,15 +71,12 @@ export default function Landing() {
     queryKey: ['distribution-history'],
     queryFn: ({ signal }) => readDistributionHistory(72, signal),
     staleTime: 120_000,
-    refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
-    refetchIntervalInBackground: PONSAJI_TOKEN.previewMode,
   })
 
   const mine = useMemo(
-    () => state?.projected?.records.find((r) => r.wallet.toLowerCase() === (address ?? PREVIEW_WALLET).toLowerCase()) ?? null,
+    () => state?.projected?.records.find((r) => r.wallet.toLowerCase() === address?.toLowerCase()) ?? null,
     [state, address],
   )
-  const account = PONSAJI_TOKEN.previewMode ? previewAccountBalance() : state?.account ?? null
 
 
   return (
@@ -126,7 +110,7 @@ export default function Landing() {
 
             <div className="hero__ctas">
               {isLaunched() ? (
-                <a className="btn-lime hero__buy" href={PONSAJI_TOKEN.buyUrl} target="_blank" rel="noopener noreferrer">
+                <a className="btn-lime hero__buy" href="https://ponslaunchpad.com" target="_blank" rel="noopener noreferrer">
                   BUY ${PONSAJI_TOKEN.symbol} <span aria-hidden="true">→</span>
                 </a>
               ) : (
@@ -155,11 +139,11 @@ export default function Landing() {
                 <div className="board__headline">
                   <span className="mono-label">IN THE ACCOUNT, TO BE DIVIDED</span>
                   <span className="board__big">
-                    {account ? `${account.units.toFixed(4)}` : '—'}
+                    {state?.account ? `${state.account.units.toFixed(4)}` : '—'}
                     <span className="board__unit"> {PONSAJI_TOKEN.payoutAsset.symbol}</span>
                   </span>
                   <span className="board__sub">
-                    {account?.usd != null ? usd(account.usd) : 'not priced'}
+                    {state?.accountUsd != null ? usd(state.accountUsd) : 'not priced'}
                     {PONSAJI_TOKEN.payrollAccount && (
                       <>
                         {' · '}
@@ -177,11 +161,7 @@ export default function Landing() {
                   </div>
                   <div>
                     <span className="mono-label">CYCLE</span>
-                    <span className="board__cell">
-                      {state?.cycle
-                        ? `#${state.cycle.index}${PONSAJI_TOKEN.previewMode ? ` · ${formatCycleCountdown(state.cycle.closesAt)}` : ''}`
-                        : '—'}
-                    </span>
+                    <span className="board__cell">{state?.cycle ? `#${state.cycle.index}` : '—'}</span>
                   </div>
                   <div>
                     <span className="mono-label">PAID IN</span>

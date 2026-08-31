@@ -45,12 +45,8 @@ const envOverride = (globalThis as { process?: { env?: Record<string, string | u
 const addr = (v: string | undefined) => (v && /^0x[a-fA-F0-9]{40}$/.test(v) ? (v as `0x${string}`) : null)
 
 export const PONSAJI_TOKEN = {
-  /** The live token address. An environment override is still available for rehearsals. */
-  address: (addr(envOverride.PONSAJI_TOKEN_ADDRESS) ??
-    '0xDa87419c9933e3dE11Fd439ADB54c5C37E110faE') as `0x${string}`,
-  buyUrl: 'https://www.ponsfamily.com/launchpad/0xDa87419c9933e3dE11Fd439ADB54c5C37E110faE',
-  /** Temporary filled-state preview while live payroll data is still being wired. */
-  previewMode: true,
+  /** Paste the contract address here after deploying. Null keeps the app in pre-launch. */
+  address: addr(envOverride.PONSAJI_TOKEN_ADDRESS) as `0x${string}` | null,
   symbol: 'PONSAJI',
   decimals: 18,
 
@@ -58,8 +54,7 @@ export const PONSAJI_TOKEN = {
    * The wallet the launchpad pays creator fees into, and the wallet payroll is
    * paid out of. It is published so anyone can watch it fill and empty.
    */
-  payrollAccount: (addr(envOverride.PONSAJI_PAYROLL_ACCOUNT) ??
-    '0xBa2492fEB8d25aB66f432A1810B6c166928258Ac') as `0x${string}`,
+  payrollAccount: addr(envOverride.PONSAJI_PAYROLL_ACCOUNT) as `0x${string}` | null,
 
   /**
    * What holders are paid in.
@@ -670,8 +665,6 @@ export async function verifyPayoutAsset(): Promise<PayoutAssetCheck> {
 
 /** Price of the payout asset, from its own USDG pool. */
 export async function readPayoutAssetPriceUsd(): Promise<number | null> {
-  if (PONSAJI_TOKEN.previewMode) return 140
-
   const asset = PONSAJI_TOKEN.payoutAsset
   for (const cand of COMMON_POOL_CANDIDATES) {
     const key: PoolKey = {
@@ -776,194 +769,6 @@ const EMPTY_HISTORY: DistributionHistory = {
   recent: [],
 }
 
-export const PREVIEW_WALLET = '0x1111111111111111111111111111111111111111' as `0x${string}`
-
-const PREVIEW_STORAGE_KEY = 'ponsaji-preview-started-at-v3'
-const PREVIEW_SESSION_FALLBACK = Date.now()
-const PREVIEW_FIRST_CYCLE_MS = 3 * 60 * 60_000
-const PREVIEW_NEXT_CYCLE_MS = 60 * 60_000
-const PREVIEW_FEE_INTERVAL_MS = 12_000
-const PREVIEW_FEE_PATTERN = [0.0003, 0.0008, 0.0004, 0.0018, 0, 0.0009, 0.0002, 0.0012]
-const PREVIEW_FEE_DRIP_PER_SECOND = 0.0001
-const PREVIEW_LIVE_TTL_MS = 15_000
-
-type PreviewLiveActivity = {
-  holders: Array<{ wallet: `0x${string}`; balance: number }>
-  transferCount: number
-  scannedTo: bigint
-  readAt: number
-}
-
-let previewLiveActivity: PreviewLiveActivity | null = null
-let previewLiveBalances = new Map<string, bigint>()
-let previewLiveRead: Promise<PreviewLiveActivity | null> | null = null
-
-async function readPreviewLiveActivity(signal?: AbortSignal): Promise<PreviewLiveActivity | null> {
-  if (previewLiveActivity && Date.now() - previewLiveActivity.readAt < PREVIEW_LIVE_TTL_MS) {
-    return previewLiveActivity
-  }
-  if (previewLiveRead) return previewLiveRead
-
-  previewLiveRead = (async () => {
-    const token = PONSAJI_TOKEN.address
-    if (!token) return previewLiveActivity
-
-    try {
-      const head = await publicClient.getBlockNumber()
-      const previous = previewLiveActivity
-      const initial = previous === null
-      const from = previous === null
-        ? (head > 200_000n ? head - 200_000n : 0n)
-        : previous.scannedTo + 1n
-      const logs = from <= head ? await scanTransfers(token, from, head, signal) : []
-      if (logs === null) return previewLiveActivity
-
-      if (initial) previewLiveBalances = new Map()
-      const zero = '0x0000000000000000000000000000000000000000'
-      for (const log of logs) {
-        const value = log.args.value ?? 0n
-        const fromWallet = (log.args.from as string).toLowerCase()
-        const toWallet = (log.args.to as string).toLowerCase()
-        if (fromWallet !== zero) {
-          previewLiveBalances.set(fromWallet, (previewLiveBalances.get(fromWallet) ?? 0n) - value)
-        }
-        if (toWallet !== zero) {
-          previewLiveBalances.set(toWallet, (previewLiveBalances.get(toWallet) ?? 0n) + value)
-        }
-      }
-
-      const holders = [...previewLiveBalances.entries()]
-        .filter(([, balance]) => balance > 0n)
-        .map(([wallet, balance]) => ({
-          wallet: wallet as `0x${string}`,
-          balance: Number(formatUnits(balance, PONSAJI_TOKEN.decimals)),
-        }))
-        .sort((a, b) => b.balance - a.balance)
-
-      previewLiveActivity = {
-        holders,
-        transferCount: (previewLiveActivity?.transferCount ?? 0) + logs.length,
-        scannedTo: head,
-        readAt: Date.now(),
-      }
-      return previewLiveActivity
-    } catch {
-      return previewLiveActivity
-    }
-  })()
-
-  try {
-    return await previewLiveRead
-  } finally {
-    previewLiveRead = null
-  }
-}
-
-function previewFeesAccrued(from: number, to: number): number {
-  const elapsedSeconds = Math.max(0, Math.floor((to - from) / 1000))
-  const buckets = Math.max(0, Math.floor((to - from) / PREVIEW_FEE_INTERVAL_MS))
-  const patternTotal = PREVIEW_FEE_PATTERN.reduce((sum, fee) => sum + fee, 0)
-  const cycles = Math.floor(buckets / PREVIEW_FEE_PATTERN.length)
-  const remainder = buckets % PREVIEW_FEE_PATTERN.length
-  const bursts = cycles * patternTotal + PREVIEW_FEE_PATTERN.slice(0, remainder).reduce((sum, fee) => sum + fee, 0)
-  return elapsedSeconds * PREVIEW_FEE_DRIP_PER_SECOND + bursts
-}
-
-function previewSessionStartedAt(): number {
-  if (typeof window === 'undefined') return PREVIEW_SESSION_FALLBACK
-  try {
-    const stored = Number(window.localStorage.getItem(PREVIEW_STORAGE_KEY))
-    if (Number.isFinite(stored) && stored > 0) return stored
-    const startedAt = Date.now()
-    window.localStorage.setItem(PREVIEW_STORAGE_KEY, String(startedAt))
-    return startedAt
-  } catch {
-    return PREVIEW_SESSION_FALLBACK
-  }
-}
-
-function previewTiming(now = Date.now()) {
-  const startedAt = previewSessionStartedAt()
-  const firstClosesAt = startedAt + PREVIEW_FIRST_CYCLE_MS
-  if (now < firstClosesAt) {
-    return { startedAt, cycleStartedAt: startedAt - 22.4 * 60_000, closesAt: firstClosesAt, index: 1, completed: 0 }
-  }
-
-  const elapsedAfterFirst = now - firstClosesAt
-  const completed = 1 + Math.floor(elapsedAfterFirst / PREVIEW_NEXT_CYCLE_MS)
-  const cycleStartedAt = firstClosesAt + (completed - 1) * PREVIEW_NEXT_CYCLE_MS
-  return {
-    startedAt,
-    cycleStartedAt,
-    closesAt: cycleStartedAt + PREVIEW_NEXT_CYCLE_MS,
-    index: completed + 1,
-    completed,
-  }
-}
-
-export function formatCycleCountdown(closesAt: number | null, now = Date.now()): string {
-  if (closesAt === null) return '--:--:--'
-  const seconds = Math.max(0, Math.ceil((closesAt - now) / 1000))
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const remainder = seconds % 60
-  return [hours, minutes, remainder].map((part) => String(part).padStart(2, '0')).join(':')
-}
-
-export function previewAccountBalance(now = Date.now()): AccountBalance {
-  const timing = previewTiming(now)
-  const units = timing.completed === 0
-    ? 12.864 + previewFeesAccrued(timing.startedAt, now)
-    : 0.006 + previewFeesAccrued(timing.cycleStartedAt, now)
-  return { units, usd: units * 140, assetPriceUsd: 140 }
-}
-
-function previewDistributionHistory(viewer?: `0x${string}` | null): DistributionHistory {
-  const { completed, startedAt } = previewTiming()
-  if (completed === 0) {
-    return {
-      totalUnits: 0,
-      totalUsd: 0,
-      runs: 0,
-      walletsPaid: 0,
-      largestRunUnits: 0,
-      lastRunAt: null,
-      blocksScanned: Math.round((72 * 3600) / SECONDS_PER_BLOCK),
-      incomplete: false,
-      recent: [],
-    }
-  }
-
-  const firstClosesAt = startedAt + PREVIEW_FIRST_CYCLE_MS
-  const allRuns = Array.from({ length: completed }, (_, index) => {
-    const cycleStartedAt = index === 0 ? startedAt : firstClosesAt + (index - 1) * PREVIEW_NEXT_CYCLE_MS
-    const cycleClosesAt = index === 0 ? firstClosesAt : cycleStartedAt + PREVIEW_NEXT_CYCLE_MS
-    const units = (index === 0 ? 12.864 : 0.006) + previewFeesAccrued(cycleStartedAt, cycleClosesAt)
-    const viewerShare = viewer ? 0.0132 + ((index * 7) % 5) / 10_000 : null
-    return {
-      at: firstClosesAt + index * PREVIEW_NEXT_CYCLE_MS,
-      units,
-      recipients: 72 + Math.min(index * 3, 24),
-      viewerShare,
-      viewerUnits: viewerShare === null ? null : units * viewerShare,
-    }
-  })
-  const totalUnits = allRuns.reduce((sum, run) => sum + run.units, 0)
-  const recent = [...allRuns].reverse().slice(0, 6)
-
-  return {
-    totalUnits,
-    totalUsd: totalUnits * 140,
-    runs: completed,
-    walletsPaid: allRuns[allRuns.length - 1].recipients,
-    largestRunUnits: Math.max(...allRuns.map((run) => run.units)),
-    lastRunAt: recent[0].at,
-    blocksScanned: Math.round((72 * 3600) / SECONDS_PER_BLOCK),
-    incomplete: false,
-    recent,
-  }
-}
-
 /**
  * Everything the payroll account has actually sent.
  *
@@ -981,8 +786,6 @@ export async function readDistributionHistory(
   /** When given, each run also reports what this wallet received. */
   viewer?: `0x${string}` | null,
 ): Promise<DistributionHistory> {
-  if (PONSAJI_TOKEN.previewMode) return previewDistributionHistory(viewer)
-
   const account = PONSAJI_TOKEN.payrollAccount
   if (!account) return EMPTY_HISTORY
 
@@ -1078,51 +881,6 @@ export type PayrollState = {
   blockedBy: string | null
 }
 
-async function previewPayrollState(signal?: AbortSignal): Promise<PayrollState> {
-  const now = Date.now()
-  const timing = previewTiming(now)
-  const elapsedMinutes = Math.max(0, (now - timing.startedAt) / 60_000)
-  const live = await readPreviewLiveActivity(signal)
-  const fallbackHolderCount = 72 + Math.min(24, Math.floor(elapsedMinutes / 4))
-  const sourceHolders = live?.holders.length
-    ? [...live.holders].sort((a, b) => Math.abs(a.balance - 5_270_000) - Math.abs(b.balance - 5_270_000))
-    : Array.from({ length: fallbackHolderCount }, (_, index) => ({
-        wallet: (`0x${(index + 4096).toString(16).padStart(40, '0')}` as `0x${string}`),
-        balance: index === 0 ? 5_270_000 : 65_000 + ((index * 1_391_923) % 21_000_000),
-      }))
-  const base = sourceHolders.map((holder, index) => {
-    const wallet = index === 0 ? PREVIEW_WALLET : holder.wallet
-    const balance = holder.balance
-    const minutesHeld = (index === 0 ? 8.5 : 1 + ((index * 3.7) % 28)) + elapsedMinutes
-    return {
-      wallet,
-      balance,
-      minutesHeld,
-      resetAt: now - minutesHeld * 60_000,
-      service: balance * minutesHeld,
-    }
-  })
-  const totalService = base.reduce((sum, record) => sum + record.service, 0)
-  const account = previewAccountBalance(now)
-  const accountUsd = account.usd!
-  const records = base
-    .map((record) => {
-      const share = record.service / totalService
-      return { ...record, share, payoutUsd: accountUsd * share }
-    })
-    .sort((a, b) => b.service - a.service)
-
-  return {
-    market: null,
-    cycle: { index: timing.index, closesAt: timing.closesAt },
-    account,
-    accountUsd,
-    projected: { closedAt: now, totalService, records, accountUsd, zeroServiceWallets: 3 },
-    ledgerEvents: live?.transferCount ?? 474 + Math.floor(Math.max(0, now - timing.startedAt) / 9_000),
-    blockedBy: null,
-  }
-}
-
 /**
  * Projects the next payroll run against the ledger as it stands.
  *
@@ -1133,8 +891,6 @@ async function previewPayrollState(signal?: AbortSignal): Promise<PayrollState> 
  * applied whenever the run lands.
  */
 export async function projectPayroll(ethUsd: number | null, signal?: AbortSignal): Promise<PayrollState> {
-  if (PONSAJI_TOKEN.previewMode) return previewPayrollState(signal)
-
   const empty: PayrollState = {
     market: null,
     cycle: null,
@@ -1229,29 +985,6 @@ export type WalletLedger = {
   incomplete: boolean
 }
 
-function previewWalletLedger(): WalletLedger {
-  const now = Date.now()
-  const minute = 60_000
-  const { startedAt } = previewTiming(now)
-  const firstBuyAt = startedAt - 8.5 * minute
-  const secondBuyAt = startedAt - 1.3 * minute
-  const points: BalancePoint[] = [
-    { at: firstBuyAt, balance: 3_830_000, change: 3_830_000 },
-    { at: secondBuyAt, balance: 5_270_000, change: 1_440_000 },
-  ]
-  const service = 3_830_000 * 7.2 + 5_270_000 * Math.max(0, (now - secondBuyAt) / minute)
-
-  return {
-    points,
-    balance: 5_270_000,
-    service,
-    serviceStart: firstBuyAt,
-    minutesHeld: Math.max(0, (now - firstBuyAt) / minute),
-    readAt: now,
-    incomplete: false,
-  }
-}
-
 /**
  * One wallet's balance over time, and the service it has accrued.
  *
@@ -1264,8 +997,6 @@ export async function readWalletLedger(
   wallet: `0x${string}`,
   signal?: AbortSignal,
 ): Promise<WalletLedger | null> {
-  if (PONSAJI_TOKEN.previewMode) return previewWalletLedger()
-
   const token = PONSAJI_TOKEN.address
   if (!token) return null
 
