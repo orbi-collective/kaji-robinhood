@@ -29,7 +29,7 @@ export default function Footer() {
         <div className="siteFooter__brand">
           <span className="siteFooter__mark">PONSAJI</span>
           <p className="siteFooter__blurb">
-            Hold {PONSAJI_TOKEN.symbol}, earn {PONSAJI_TOKEN.payoutAsset.symbol} — paid for time actually held, not for
+            Hold {PONSAJI_TOKEN.symbol}, earn {PONSAJI_TOKEN.payoutAsset.symbol}. Paid for time actually held, not for
             holding at the right second.
           </p>
           <span className="mono-label siteFooter__chain">
@@ -109,7 +109,7 @@ export default function Footer() {
       <p className="siteFooter__legal">
         Nothing here is a promise or financial advice. The account holds whatever trading has put in it, which may be a
         great deal or nothing at all. Onchain positions carry loss, liquidity and smart-contract risk, and the tokenized
-        stock this pays in is issued by a third party on an upgradeable, pausable contract — that risk passes through.
+        stock this pays in is issued by a third party on an upgradeable, pausable contract, and that risk passes through.
       </p>
     </footer>
   )

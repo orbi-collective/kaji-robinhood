@@ -122,9 +122,9 @@ export default function Mechanics() {
 
           <ol className="steps">
             {[
-              ['Trade pays a fee', `Every buy and sell on the launchpad pays a fee, and the creator's share of it is the payroll account. Buys feed it, sells feed it. Trading is the whole economy — there is no treasury and no revenue story.`],
+              ['Trade pays a fee', `Every buy and sell on the launchpad pays a fee, and the creator's share of it is the payroll account. Buys feed it, sells feed it. Trading is the whole economy. There is no treasury and no revenue story.`],
               ['Service accrues', `Every token you hold earns time. Add to your holding and the time already earned stays; reduce it by any amount and those shares restart at zero.`],
-              ['The cycle closes', `Cycle length is drawn from the launch instant and the cycle index — the same sequence for everyone, predictable by nobody. The moment is never published, because a published moment is one a late buyer trades around.`],
+              ['The cycle closes', `Cycle length is drawn from the launch instant and the cycle index, the same sequence for everyone, predictable by nobody. The moment is never published, because a published moment is one a late buyer trades around.`],
               ['The account is divided', `The whole account is split by service and sent out. Nothing to claim, no button to press, no deadline to miss.`],
             ].map(([title, body], i) => (
               <li key={title} className="step">
@@ -166,7 +166,7 @@ export default function Mechanics() {
               </div>
               <p className="assetPanel__line">
                 {assetCheck.ok
-                  ? `${assetCheck.symbol} confirmed — ${assetCheck.totalSupply?.toLocaleString('en-US', { maximumFractionDigits: 0 })} supply, ${assetCheck.decimals} decimals. Dozens of tokens on this chain share this symbol; the impostors carry a supply of exactly one billion, which this does not.`
+                  ? `${assetCheck.symbol} confirmed at ${assetCheck.totalSupply?.toLocaleString('en-US', { maximumFractionDigits: 0 })} supply, ${assetCheck.decimals} decimals. Dozens of tokens on this chain share this symbol; the impostors carry a supply of exactly one billion, which this does not.`
                   : assetCheck.problems.join(' ')}
               </p>
               {assetCheck.cautions.map((c) => (
@@ -185,7 +185,7 @@ export default function Mechanics() {
             <span className="lime-square" aria-hidden="true" />
           </h2>
           <p className="fold__intro">
-            These are statements about other people&apos;s money, so they are calculated here rather than asserted — by
+            These are statements about other people&apos;s money, so they are calculated here rather than asserted, using
             the same functions that decide what gets paid.
           </p>
 
@@ -253,7 +253,7 @@ export default function Mechanics() {
             <span className="lime-square" aria-hidden="true" />
           </h2>
           <p className="fold__intro">
-            Before this token existed, PONSAJI was a scanner for exactly this class of position — reading fees from the
+            Before this token existed, PONSAJI was a scanner for exactly this class of position, reading fees from the
             contracts that charge them and asking how long capital must sit before the income repays the round trip.
             Here is what it says about the venues alongside this one, read live.
           </p>
@@ -272,7 +272,7 @@ export default function Mechanics() {
                 <span className="rivals__cost">
                   −{((v.distribution!.entry_fee_bps + v.distribution!.exit_fee_bps) / 100).toFixed(2)}%
                 </span>
-                <span className="rivals__pays">{v.distribution!.pays_holders ? 'Yes' : 'No — burn to earn'}</span>
+                <span className="rivals__pays">{v.distribution!.pays_holders ? 'Yes' : 'No, burn to earn'}</span>
                 <Link className="rivals__link" to={`/recipes/${v.recipe_id}`}>
                   INSPECT →
                 </Link>
@@ -300,7 +300,7 @@ export default function Mechanics() {
           <p>
             The money divided here is the launchpad&apos;s creator-fee stream, and it arrives in an ordinary wallet.
             Whoever holds that key can decline to run payroll. No contract compels a distribution, and this page will
-            not pretend one does — every other project in this shape carries the same exposure, and most of them do not
+            not pretend one does. Every other project in this shape carries the same exposure, and most of them do not
             say so.
           </p>
           <p>
@@ -321,7 +321,7 @@ export default function Mechanics() {
             <h2 className="payroll__pendingTitle">Not deployed yet</h2>
             <p>
               The token is deployed by hand on the launchpad. Until its address exists there is no ledger, no account
-              and nothing to divide — so this page shows the terms and nothing else. It will not display a figure it
+              and nothing to divide, so this page shows the terms and nothing else. It will not display a figure it
               cannot read.
             </p>
             <dl className="payroll__spec">
@@ -345,7 +345,7 @@ export default function Mechanics() {
               </div>
               <div>
                 <dt className="mono-label">PAID IN</dt>
-                <dd>{PONSAJI_TOKEN.payoutAsset.symbol} — paired on the launchpad, never swapped</dd>
+                <dd>{PONSAJI_TOKEN.payoutAsset.symbol}, paired on the launchpad, never swapped</dd>
               </div>
             </dl>
           </section>
@@ -439,7 +439,7 @@ export default function Mechanics() {
 
         <p className="payroll__foot">
           Nothing on this page is a promise. The account holds whatever trading has put in it, which may be a great deal
-          or nothing at all. Money that arrives later pays the people who were already here — that is the shape of every
+          or nothing at all. Money that arrives later pays the people who were already here. That is the shape of every
           token of this kind on this chain, and it belongs on the front of the page rather than behind a roadmap.
         </p>
       </div>

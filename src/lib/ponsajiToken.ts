@@ -116,20 +116,22 @@ export const PONSAJI_TOKEN = {
    * PonsajiPayroll, the batch sender. Paste the address after deploying it.
    *
    * Without it the crank falls back to one transaction per holder, which works
-   * but costs a transaction each — measured at ~25,000 gas per recipient either
-   * way, so the saving is in time and nonce churn rather than fees. Left null
-   * until deployed, because a wrong address here would send an approval to a
-   * contract nobody has looked at.
+   * but costs a transaction each. The transfer itself is ~37,664 gas per
+   * recipient either way (measured on a fork against the real SPCX token, which
+   * is a beacon proxy; a plain mock costs ~25,000), so the saving is in time and
+   * nonce churn rather than fees. Left null until deployed, because a wrong
+   * address here would send an approval to a contract nobody has looked at.
    */
   payrollContract: addr(envOverride.PONSAJI_PAYROLL_CONTRACT) as `0x${string}` | null,
 
   /**
    * Recipients per batch.
    *
-   * Cost is flat at ~25,000 gas per recipient up to at least 500, and this
-   * chain's block gas limit is effectively unbounded, so the ceiling is
-   * practical rather than technical: a failed batch wastes only its own gas,
-   * and smaller batches make a bad recipient quicker to isolate.
+   * Cost is flat per recipient up to at least 500, and this chain's block gas
+   * limit is effectively unbounded, so the ceiling is practical rather than
+   * technical: a failed batch wastes only its own gas, and smaller batches make
+   * a bad recipient quicker to isolate. A full 400-recipient batch of real SPCX
+   * measured 15,065,686 gas on a fork.
    */
   batchSize: 400,
 } as const

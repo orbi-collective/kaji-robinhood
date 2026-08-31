@@ -155,7 +155,7 @@ export default function TxPreview({
             <h3 className="txPreview__doneTitle">{canSign ? 'Position opened' : 'Demo position recorded'}</h3>
             <p>
               {tx.recipe_name} {canSign ? 'funded with' : 'recorded at'} {usd(tx.capital_usd)}. It is checked against
-              your mandate each time you open this app — nothing watches it while this tab is closed.
+              your mandate each time you open this app. Nothing watches it while this tab is closed.
               {!canSign && ' No transaction was signed and no funds moved.'}
             </p>
             {txHash && (
@@ -235,7 +235,7 @@ export default function TxPreview({
             )}
             {blocked && (
               <p className="txPreview__notice txPreview__notice--error" role="alert">
-                The policy engine blocked this action. Adjust the mandate or the allocation — PONSAJI will not prepare a
+                The policy engine blocked this action. Adjust the mandate or the allocation. PONSAJI will not prepare a
                 transaction that violates it.
               </p>
             )}

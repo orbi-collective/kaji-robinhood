@@ -104,7 +104,7 @@ export default function Landing() {
             </h1>
             <p className="hero__sub">
               Trading fees buy {PONSAJI_TOKEN.payoutAsset.symbol} and it is paid out to holders. Every venue like this
-              pays on a snapshot of who held at one instant — so a wallet can buy seconds before it, take a full share,
+              pays on a snapshot of who held at one instant, so a wallet can buy seconds before it, take a full share,
               and sell. <strong>This one pays for time actually held.</strong>
             </p>
 
@@ -177,7 +177,7 @@ export default function Landing() {
                     0<span className="board__unit"> {PONSAJI_TOKEN.payoutAsset.symbol}</span>
                   </span>
                   <span className="board__sub">
-                    The token is not deployed. There is no account, no ledger and nothing to divide — so this reads zero
+                    The token is not deployed. There is no account, no ledger and nothing to divide, so this reads zero
                     rather than borrowing a number from somewhere else.
                   </span>
                 </div>

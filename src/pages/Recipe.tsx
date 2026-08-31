@@ -194,8 +194,8 @@ export default function Recipe() {
               </h1>
               <p className="recipePage__desc">
                 {opportunity.distribution
-                  ? `${opportunity.distribution.token_symbol} — a fee-distribution position, priced against your mandate before anything reaches your wallet.`
-                  : `${opportunity.ingredients.map((i) => i.label).join(', ')} — assembled under one mandate and validated before anything reaches your wallet.`}
+                  ? `${opportunity.distribution.token_symbol}: a fee-distribution position, priced against your mandate before anything reaches your wallet.`
+                  : `${opportunity.ingredients.map((i) => i.label).join(', ')}, assembled under one mandate and validated before anything reaches your wallet.`}
               </p>
 
               {/* A vault's headline is a rate it pays; a distribution token's is
@@ -246,7 +246,7 @@ export default function Recipe() {
                     className="statGrid__value statGrid__value--lime"
                     title={
                       measured?.distribution
-                        ? 'What a seller can take out of the pool before the price falls 5%. This is not the token’s market value — a token can be worth millions in aggregate while ten thousand dollars of selling moves it five percent.'
+                        ? 'What a seller can take out of the pool before the price falls 5%. This is not the token’s market value. A token can be worth millions in aggregate while ten thousand dollars of selling moves it five percent.'
                         : 'Liquid share of the vault'
                     }
                   >

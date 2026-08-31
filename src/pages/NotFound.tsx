@@ -8,7 +8,7 @@ export default function NotFound() {
         <span className="mono-label">ERROR 404</span>
         <h1 className="crashScreen__title">No such station.</h1>
         <p className="crashScreen__body">
-          That route isn&rsquo;t part of the foundry. The scanner is the usual way in — it ranks every live recipe
+          That route isn&rsquo;t part of the foundry. The scanner is the usual way in. It ranks every live recipe
           against your mandate.
         </p>
         <div className="crashScreen__actions">

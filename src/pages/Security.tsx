@@ -112,7 +112,7 @@ export default function Security() {
         detail: !oracleRows.length
           ? 'No venue in this scan references a price oracle, so there is no feed freshness to report.'
           : stalest > heartbeat
-            ? `Stalest feed ${formatDuration(stalest)}, past its heartbeat — execution paused on affected recipes.`
+            ? `Stalest feed ${formatDuration(stalest)}, past its heartbeat. Execution paused on affected recipes.`
             : `All Chainlink feeds reporting inside their publisher heartbeat.${
                 oracleFree > 0
                   ? ` ${oracleFree} venue${oracleFree > 1 ? 's' : ''} in this scan reference no oracle at all.`
@@ -126,7 +126,7 @@ export default function Security() {
         name: 'Deployment integrity',
         verdict: !IS_LIVE_CHAIN ? 'review' : deployment ? (deployment.ok ? 'pass' : 'block') : 'review',
         detail: !IS_LIVE_CHAIN
-          ? 'No chain endpoint — vault addresses cannot be verified.'
+          ? 'No chain endpoint, so vault addresses cannot be verified.'
           : deployment
             ? deployment.ok
               ? 'Every vault confirmed onchain to hold the underlying asset it claims.'
@@ -142,7 +142,7 @@ export default function Security() {
         verdict: IS_LIVE_CHAIN ? 'pass' : 'review',
         detail: IS_LIVE_CHAIN
           ? 'Every action is simulated against current state before it is offered for signature.'
-          : `No ${CHAIN_NAME} endpoint configured — simulation runs on reference data only.`,
+          : `No ${CHAIN_NAME} endpoint configured, so simulation runs on reference data only.`,
         bound: 'pre-signature',
         checkedAt: now,
       },

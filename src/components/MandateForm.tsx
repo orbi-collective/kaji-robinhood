@@ -346,12 +346,12 @@ export default function MandateForm({ onSaved }: { onSaved?: () => void }) {
               value={draft.approval_mode}
               onChange={(e) => set('approval_mode', e.target.value as ApprovalMode)}
             >
-              <option value="manual">MANUAL — YOU SIGN EVERY ACTION</option>
+              <option value="manual">MANUAL: YOU SIGN EVERY ACTION</option>
               {/* No session-key mechanism is deployed. Offering it as a
                   selectable mode would promise a delegation this build
                   cannot perform. */}
               <option value="session_key" disabled>
-                SESSION KEY — NOT YET DEPLOYED
+                SESSION KEY: NOT YET DEPLOYED
               </option>
             </select>
           </div>

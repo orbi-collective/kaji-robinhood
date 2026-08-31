@@ -18,7 +18,7 @@ const STORAGE_KEY = 'ponsaji.risk.ack.v1'
 const POINTS = [
   {
     title: 'PONSAJI is an instrument, not a manager',
-    body: 'It reads contracts, prices positions and checks them against limits you set. It never takes custody, never signs, and runs no background process — nothing is monitored while this tab is closed.',
+    body: 'It reads contracts, prices positions and checks them against limits you set. It never takes custody, never signs, and runs no background process. Nothing is monitored while this tab is closed.',
   },
   {
     title: 'Every figure is an estimate carrying its inputs',

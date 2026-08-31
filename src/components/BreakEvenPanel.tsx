@@ -85,7 +85,7 @@ export default function BreakEvenPanel({
               : d.pro_rata_verified === true
                 ? `Pro-rata confirmed across ${d.samples_taken} sampled recipients`
                 : d.pro_rata_verified === false
-                  ? `${d.samples_taken} sampled recipients disagreed — treat as approximate`
+                  ? `${d.samples_taken} sampled recipients disagreed, so treat this as approximate`
                   : d.samples_taken > 0
                     ? `Measured from ${d.samples_taken} live payout${d.samples_taken > 1 ? 's' : ''}`
                     : 'Not yet measured'}
@@ -156,7 +156,7 @@ export default function BreakEvenPanel({
           <p className={holderPays ? '' : 'breakEven__blockedEmph'}>{breakEven.blocked_by}</p>
           {!holderPays && (
             <p>
-              To earn from this venue you must burn the token, which is irreversible — a different decision from
+              To earn from this venue you must burn the token, which is irreversible. That is a different decision from
               holding one, and the one its own documentation is clearest about.
             </p>
           )}

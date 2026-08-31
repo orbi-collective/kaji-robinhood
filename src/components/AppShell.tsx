@@ -79,7 +79,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, BoundarySt
       <div className="crashScreen" role="alert">
         <h1 className="crashScreen__title">The console dropped out.</h1>
         <p className="crashScreen__body">
-          A surface failed to render. Nothing was signed and no funds moved — your mandate and positions are stored
+          A surface failed to render. Nothing was signed and no funds moved. Your mandate and positions are stored
           locally and will be here when you reload.
         </p>
         <div className="crashScreen__actions">

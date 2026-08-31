@@ -7,7 +7,7 @@ import './ui.css'
 const SOURCE_COPY: Record<DataSource, { label: string; title: string }> = {
   live: { label: 'LIVE', title: 'Read from venue contracts on this block' },
   delayed: { label: 'DELAYED', title: 'Cached venue read, refreshed on an interval' },
-  demo: { label: 'DEMO', title: 'Reference data — no venue adapter configured for this build' },
+  demo: { label: 'DEMO', title: 'Reference data: no venue adapter configured for this build' },
 }
 
 export function SourceTag({ source, className }: { source: DataSource; className?: string }) {
