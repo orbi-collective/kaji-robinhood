@@ -62,29 +62,24 @@ export default function TopNav({ variant = 'app' }: { variant?: 'app' | 'landing
       </nav>
 
       <div className="topNav__right">
-        {/* X link is intentionally omitted until the handle is confirmed —
-            an icon pointing at a placeholder handle is worse than none. */}
-        {variant === 'landing' ? (
-          <>
-            <span className="topNav__chain">
-              <span className="topNav__chainLabel">BUILT ON</span>
-              <span className="topNav__chainName">
-                {CHAIN_NAME.toUpperCase()}
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M17 3c-4 0-8.5 2.4-10.6 7.1-1.4 3.2-1.5 6.9-1.4 8.9.6-2.6 2-5.9 4.3-8.2-.7 2.2-.8 4.8-.3 6.6C10.4 15 13.6 12 15 8.6c-.4 2.2-1.4 4.6-2.7 6.3 2.6-1.3 4.9-3.9 5.9-7.4.5-1.8.6-3.4.5-4.4-.5-.1-1.1-.1-1.7-.1Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </span>
+        {/* The landing page keeps the chain badge, but the control is the same
+            one every other page carries: connecting is the action a visitor
+            takes, and "how it works" is already the button under the hero. */}
+        {variant === 'landing' && (
+          <span className="topNav__chain">
+            <span className="topNav__chainLabel">BUILT ON</span>
+            <span className="topNav__chainName">
+              {CHAIN_NAME.toUpperCase()}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M17 3c-4 0-8.5 2.4-10.6 7.1-1.4 3.2-1.5 6.9-1.4 8.9.6-2.6 2-5.9 4.3-8.2-.7 2.2-.8 4.8-.3 6.6C10.4 15 13.6 12 15 8.6c-.4 2.2-1.4 4.6-2.7 6.3 2.6-1.3 4.9-3.9 5.9-7.4.5-1.8.6-3.4.5-4.4-.5-.1-1.1-.1-1.7-.1Z"
+                  fill="currentColor"
+                />
+              </svg>
             </span>
-            <Link to="/docs" className="topNav__cta">
-              HOW IT WORKS <span aria-hidden="true">→</span>
-            </Link>
-          </>
-        ) : (
-          <WalletButton />
+          </span>
         )}
+        <WalletButton />
       </div>
     </header>
   )

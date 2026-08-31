@@ -2,23 +2,13 @@
    Hard rules between panels, no rounded corners, no shadows: the same machined
    plate language the rest of the product uses. */
 
-.payoutPage__plate {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-.payoutPage__scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(180deg, rgba(4, 5, 4, 0.82) 0%, rgba(4, 5, 4, 0.94) 45%, var(--void) 100%);
-  pointer-events: none;
-}
-
+/* Flat black, edge to edge. The panels carry the structure; anything behind
+   them is competition for the figures they hold. */
 .payoutPage {
-  position: relative;
-  z-index: 2;
+  background: var(--foundry-black);
+  /* main is a flex column, so stretching is what fills the viewport on a short
+     page and keeps the footer at the bottom rather than mid-screen. */
+  flex: 1;
   max-width: 1440px;
   margin: 0 auto;
   padding: 26px 40px 60px;
@@ -199,7 +189,7 @@
 }
 
 .curve__resetDot {
-  fill: var(--void);
+  fill: var(--panel-black);
   stroke: #ff5c3a;
   stroke-width: 2;
 }

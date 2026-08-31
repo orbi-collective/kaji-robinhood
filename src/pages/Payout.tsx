@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import ScenePlate from '../components/ScenePlate'
 import { AppShell } from '../components/AppShell'
 import { useWalletGate } from '../components/Wallet'
 import { explorerAddress } from '../lib/chain'
@@ -276,9 +275,10 @@ export default function Payout() {
   const account = state?.account ?? null
   const runs = history?.recent ?? []
 
+  // No scene plate here. This is an instrument panel: a video behind live
+  // figures competes with the one thing the page exists to show.
   return (
-    <AppShell plate={<ScenePlate scene="kaji-vault" className="payoutPage__plate" />}>
-      <div className="payoutPage__scrim" aria-hidden="true" />
+    <AppShell>
       <div className="payoutPage">
         {/*
           The cycle index, and never its close time.
