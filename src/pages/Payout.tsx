@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
@@ -8,6 +8,7 @@ import { readPriceFeed } from '../lib/feeds'
 import {
   PONSAJI_TOKEN,
   formatCycleCountdown,
+  previewAccountBalance,
   isLaunched,
   projectPayroll,
   readDistributionHistory,
@@ -246,6 +247,13 @@ export default function Payout() {
   const launched = isLaunched()
   const viewer = address ?? PREVIEW_WALLET
   const viewerActive = isConnected || PONSAJI_TOKEN.previewMode
+  const [, setPreviewTick] = useState(0)
+
+  useEffect(() => {
+    if (!PONSAJI_TOKEN.previewMode) return
+    const timer = window.setInterval(() => setPreviewTick((tick) => tick + 1), 1_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   const { data: state } = useQuery({
     queryKey: ['payroll'],
@@ -257,6 +265,7 @@ export default function Payout() {
     enabled: launched,
     staleTime: 30_000,
     refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
+    refetchIntervalInBackground: PONSAJI_TOKEN.previewMode,
   })
 
   const { data: history } = useQuery({
@@ -264,6 +273,7 @@ export default function Payout() {
     queryFn: ({ signal }) => readDistributionHistory(72, signal, viewer),
     staleTime: 60_000,
     refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
+    refetchIntervalInBackground: PONSAJI_TOKEN.previewMode,
   })
 
   const { data: ledger, isPending: ledgerPending } = useQuery({
@@ -272,6 +282,7 @@ export default function Payout() {
     enabled: viewerActive && launched,
     staleTime: 30_000,
     refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
+    refetchIntervalInBackground: PONSAJI_TOKEN.previewMode,
   })
 
   const totalService = state?.projected?.totalService ?? 0
@@ -280,7 +291,7 @@ export default function Payout() {
   const points = hasCurve ? ledger!.points : EXAMPLE
   const readAt = hasCurve ? ledger!.readAt : EXAMPLE[EXAMPLE.length - 1].at + 20 * 60_000
 
-  const account = state?.account ?? null
+  const account = PONSAJI_TOKEN.previewMode ? previewAccountBalance() : state?.account ?? null
   const runs = history?.recent ?? []
 
   // No scene plate here. This is an instrument panel: a video behind live

@@ -784,6 +784,7 @@ const PREVIEW_FIRST_CYCLE_MS = 3 * 60 * 60_000
 const PREVIEW_NEXT_CYCLE_MS = 60 * 60_000
 const PREVIEW_FEE_INTERVAL_MS = 12_000
 const PREVIEW_FEE_PATTERN = [0.0003, 0.0008, 0.0004, 0.0018, 0, 0.0009, 0.0002, 0.0012]
+const PREVIEW_FEE_DRIP_PER_SECOND = 0.0001
 const PREVIEW_LIVE_TTL_MS = 15_000
 
 type PreviewLiveActivity = {
@@ -859,11 +860,13 @@ async function readPreviewLiveActivity(signal?: AbortSignal): Promise<PreviewLiv
 }
 
 function previewFeesAccrued(from: number, to: number): number {
+  const elapsedSeconds = Math.max(0, Math.floor((to - from) / 1000))
   const buckets = Math.max(0, Math.floor((to - from) / PREVIEW_FEE_INTERVAL_MS))
   const patternTotal = PREVIEW_FEE_PATTERN.reduce((sum, fee) => sum + fee, 0)
   const cycles = Math.floor(buckets / PREVIEW_FEE_PATTERN.length)
   const remainder = buckets % PREVIEW_FEE_PATTERN.length
-  return cycles * patternTotal + PREVIEW_FEE_PATTERN.slice(0, remainder).reduce((sum, fee) => sum + fee, 0)
+  const bursts = cycles * patternTotal + PREVIEW_FEE_PATTERN.slice(0, remainder).reduce((sum, fee) => sum + fee, 0)
+  return elapsedSeconds * PREVIEW_FEE_DRIP_PER_SECOND + bursts
 }
 
 function previewSessionStartedAt(): number {
@@ -905,6 +908,14 @@ export function formatCycleCountdown(closesAt: number | null, now = Date.now()):
   const minutes = Math.floor((seconds % 3600) / 60)
   const remainder = seconds % 60
   return [hours, minutes, remainder].map((part) => String(part).padStart(2, '0')).join(':')
+}
+
+export function previewAccountBalance(now = Date.now()): AccountBalance {
+  const timing = previewTiming(now)
+  const units = timing.completed === 0
+    ? 12.864 + previewFeesAccrued(timing.startedAt, now)
+    : 0.006 + previewFeesAccrued(timing.cycleStartedAt, now)
+  return { units, usd: units * 140, assetPriceUsd: 140 }
 }
 
 function previewDistributionHistory(viewer?: `0x${string}` | null): DistributionHistory {
@@ -1092,10 +1103,8 @@ async function previewPayrollState(signal?: AbortSignal): Promise<PayrollState> 
     }
   })
   const totalService = base.reduce((sum, record) => sum + record.service, 0)
-  const accountUnits = timing.completed === 0
-    ? 12.864 + previewFeesAccrued(timing.startedAt, now)
-    : 0.006 + previewFeesAccrued(timing.cycleStartedAt, now)
-  const accountUsd = accountUnits * 140
+  const account = previewAccountBalance(now)
+  const accountUsd = account.usd!
   const records = base
     .map((record) => {
       const share = record.service / totalService
@@ -1106,7 +1115,7 @@ async function previewPayrollState(signal?: AbortSignal): Promise<PayrollState> 
   return {
     market: null,
     cycle: { index: timing.index, closesAt: timing.closesAt },
-    account: { units: accountUnits, usd: accountUsd, assetPriceUsd: 140 },
+    account,
     accountUsd,
     projected: { closedAt: now, totalService, records, accountUsd, zeroServiceWallets: 3 },
     ledgerEvents: live?.transferCount ?? 474 + Math.floor(Math.max(0, now - timing.startedAt) / 9_000),

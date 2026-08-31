@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import ScenePlate from '../components/ScenePlate'
@@ -15,6 +15,7 @@ import {
   readDistributionHistory,
   readPayoutAssetPriceUsd,
   formatCycleCountdown,
+  previewAccountBalance,
   PONSAJI_TOKEN,
   PREVIEW_WALLET,
 } from '../lib/ponsajiToken'
@@ -39,6 +40,13 @@ const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
 
 export default function Landing() {
   const { address } = useWalletGate()
+  const [, setPreviewTick] = useState(0)
+
+  useEffect(() => {
+    if (!PONSAJI_TOKEN.previewMode) return
+    const timer = window.setInterval(() => setPreviewTick((tick) => tick + 1), 1_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   const { data: state } = useQuery({
     queryKey: ['payroll'],
@@ -50,6 +58,7 @@ export default function Landing() {
     enabled: isLaunched(),
     staleTime: 30_000,
     refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
+    refetchIntervalInBackground: PONSAJI_TOKEN.previewMode,
   })
 
   // The scanner's own readings, used here as evidence rather than as a feature
@@ -76,12 +85,14 @@ export default function Landing() {
     queryFn: ({ signal }) => readDistributionHistory(72, signal),
     staleTime: 120_000,
     refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
+    refetchIntervalInBackground: PONSAJI_TOKEN.previewMode,
   })
 
   const mine = useMemo(
     () => state?.projected?.records.find((r) => r.wallet.toLowerCase() === (address ?? PREVIEW_WALLET).toLowerCase()) ?? null,
     [state, address],
   )
+  const account = PONSAJI_TOKEN.previewMode ? previewAccountBalance() : state?.account ?? null
 
 
   return (
@@ -144,11 +155,11 @@ export default function Landing() {
                 <div className="board__headline">
                   <span className="mono-label">IN THE ACCOUNT, TO BE DIVIDED</span>
                   <span className="board__big">
-                    {state?.account ? `${state.account.units.toFixed(4)}` : '—'}
+                    {account ? `${account.units.toFixed(4)}` : '—'}
                     <span className="board__unit"> {PONSAJI_TOKEN.payoutAsset.symbol}</span>
                   </span>
                   <span className="board__sub">
-                    {state?.accountUsd != null ? usd(state.accountUsd) : 'not priced'}
+                    {account?.usd != null ? usd(account.usd) : 'not priced'}
                     {PONSAJI_TOKEN.payrollAccount && (
                       <>
                         {' · '}

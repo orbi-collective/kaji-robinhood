@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import ScenePlate from '../components/ScenePlate'
@@ -8,7 +8,7 @@ import { isSybilInvariant, shareOfLateEntry } from '../lib/payroll'
 import { explorerAddress } from '../lib/chain'
 import { fetchOpportunities } from '../lib/adapters'
 import { readPriceFeed } from '../lib/feeds'
-import { formatCycleCountdown, isLaunched, projectPayroll, PONSAJI_TOKEN, PREVIEW_WALLET, verifyPayoutAsset } from '../lib/ponsajiToken'
+import { formatCycleCountdown, isLaunched, previewAccountBalance, projectPayroll, PONSAJI_TOKEN, PREVIEW_WALLET, verifyPayoutAsset } from '../lib/ponsajiToken'
 import './Docs.css'
 
 /**
@@ -28,6 +28,13 @@ const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
 export default function Docs() {
   const { address } = useWalletGate()
   const [lateMinutes, setLateMinutes] = useState(1)
+  const [, setPreviewTick] = useState(0)
+
+  useEffect(() => {
+    if (!PONSAJI_TOKEN.previewMode) return
+    const timer = window.setInterval(() => setPreviewTick((tick) => tick + 1), 1_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   // The payout asset is asserted onchain rather than trusted from config: this
   // chain carries dozens of tokens with this symbol, and paying every holder in
@@ -57,12 +64,14 @@ export default function Docs() {
     enabled: isLaunched(),
     staleTime: 30_000,
     refetchInterval: PONSAJI_TOKEN.previewMode ? 1_000 : false,
+    refetchIntervalInBackground: PONSAJI_TOKEN.previewMode,
   })
 
   const mine = useMemo(
     () => state?.projected?.records.find((r) => r.wallet.toLowerCase() === (address ?? PREVIEW_WALLET).toLowerCase()) ?? null,
     [state, address],
   )
+  const account = PONSAJI_TOKEN.previewMode ? previewAccountBalance() : state?.account ?? null
 
   /**
    * The lateness bound. Against the live ledger once there is one; before that,
@@ -357,12 +366,12 @@ export default function Docs() {
               <div className="payrollCell">
                 <span className="mono-label">IN THE ACCOUNT</span>
                 <span className="payrollCell__value payrollCell__value--lime">
-                  {state?.account
-                    ? `${state.account.units.toFixed(4)} ${PONSAJI_TOKEN.payoutAsset.symbol}`
+                  {account
+                    ? `${account.units.toFixed(4)} ${PONSAJI_TOKEN.payoutAsset.symbol}`
                     : '—'}
                 </span>
                 <span className="payrollCell__note">
-                  {state?.accountUsd != null ? `${usd(state.accountUsd)} · ` : ''}
+                  {account?.usd != null ? `${usd(account.usd)} · ` : ''}
                   {PONSAJI_TOKEN.payrollAccount ? (
                     <a href={explorerAddress(PONSAJI_TOKEN.payrollAccount)} target="_blank" rel="noopener noreferrer">
                       {short(PONSAJI_TOKEN.payrollAccount)} ↗
