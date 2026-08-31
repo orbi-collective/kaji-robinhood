@@ -49,7 +49,13 @@ export function WalletButton() {
           onClick={() => injected && connect({ connector: injected })}
           disabled={isPending || !injected}
         >
-          {isPending ? 'CONNECTING…' : 'CONNECT WALLET'}
+          {isPending ? (
+            'CONNECTING…'
+          ) : (
+            <>
+              CONNECT<span className="walletBtn__word"> WALLET</span>
+            </>
+          )}
         </button>
         {error && (
           <span className="walletBtn__error" role="alert">

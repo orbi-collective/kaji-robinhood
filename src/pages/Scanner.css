@@ -459,6 +459,15 @@
     grid-template-columns: 1fr 1fr;
   }
 
+  /* Five cells in two columns leaves the last one beside a hole. The limits
+     control takes the full row instead, which also gives it a wider target. */
+  .filterRail__cell--action {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .filterRail__cell {
     padding: 12px 16px 14px;
   }

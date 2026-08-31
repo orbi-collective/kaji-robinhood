@@ -107,3 +107,14 @@
   color: var(--fault-red);
   border-color: rgba(255, 75, 67, 0.5);
 }
+
+/*
+  On a narrow header the full label crowds the wordmark off its own row: the
+  brand needed 129px of a 110px column and spilled under the button. "CONNECT"
+  beside a wallet is not ambiguous, so the second word is what gives way.
+*/
+@media (max-width: 560px) {
+  .walletBtn__word {
+    display: none;
+  }
+}

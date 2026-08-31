@@ -392,7 +392,12 @@ export default function Payout() {
             )}
           </div>
 
-          <Curve points={points} readAt={readAt} example={!hasCurve} />
+          {/* Scrolls rather than shrinks. Squeezed into a phone the axis labels
+              render around three pixels tall, which is a chart you cannot read;
+              a swipe keeps every label at its intended size. */}
+          <div className="payoutChart__plot">
+            <Curve points={points} readAt={readAt} example={!hasCurve} />
+          </div>
 
           <p className="payoutChart__legend">
             <span className="payoutChart__swatch" aria-hidden="true" />

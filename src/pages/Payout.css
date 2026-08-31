@@ -10,11 +10,20 @@
      page and keeps the footer at the bottom rather than mid-screen. */
   flex: 1;
   max-width: 1440px;
+  /* Auto margins would otherwise switch this flex item off stretch and size it
+     to its own content, which on a phone made the page wider than the screen. */
+  width: 100%;
   margin: 0 auto;
   padding: 26px 40px 60px;
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+/* Panels must be allowed to shrink, or the scrolling plot inside the chart
+   widens the whole column instead of scrolling within its own panel. */
+.payoutPage > * {
+  min-width: 0;
 }
 
 /* ---------- cycle strip ---------- */
@@ -140,6 +149,13 @@
 
 .payoutChart__flag {
   color: var(--steel);
+}
+
+.payoutChart__plot {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
 }
 
 .curve {
@@ -423,6 +439,19 @@
 
   .payoutSplit {
     gap: 1px;
+  }
+}
+
+@media (max-width: 720px) {
+  /* Below this the plot is narrower than the chart needs, so it scrolls inside
+     its own panel and the page itself never moves sideways. */
+  .curve {
+    width: 560px;
+  }
+
+  .payoutChart__plot {
+    /* A hint that there is more to the right, rather than a hard edge. */
+    padding-bottom: 6px;
   }
 }
 

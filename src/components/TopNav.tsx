@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { CHAIN_NAME } from '../lib/chain'
 import { WalletButton } from './Wallet'
@@ -6,10 +7,14 @@ import './TopNav.css'
 /**
  * The only navigation in the product.
  *
- * Landing and the app shell differ in exactly one thing — the right-hand action,
- * because a visitor needs a way in and an operator needs their wallet. Links,
- * labels, order, brand, height and states are shared so the same destination is
- * never called two different things.
+ * Landing and the app shell differ in exactly one thing, the chain badge, since
+ * a visitor wants to know where this runs. Links, labels, order, brand, height
+ * and states are shared so the same destination is never called two different
+ * things.
+ *
+ * Below the drawer breakpoint the links collapse behind a menu button. They used
+ * to wrap onto a second row and push the wallet control off the side of a phone,
+ * which is not a layout so much as a control you cannot reach.
  */
 
 /**
@@ -29,9 +34,31 @@ export const NAV_LINKS = [
 
 export default function TopNav({ variant = 'app' }: { variant?: 'app' | 'landing' }) {
   const { pathname } = useLocation()
+  const [open, setOpen] = useState(false)
+  const toggleRef = useRef<HTMLButtonElement>(null)
+
+  // Arriving somewhere is the end of navigating, so the drawer closes itself
+  // rather than covering the page you just asked for.
+  useEffect(() => setOpen(false), [pathname])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setOpen(false)
+      // Escape should hand the focus back to the control that opened the drawer,
+      // not drop it at the top of the document.
+      toggleRef.current?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const isActive = (owns: readonly string[]) =>
+    owns.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
   return (
-    <header className={`topNav topNav--${variant}`}>
+    <header className={`topNav topNav--${variant} ${open ? 'topNav--open' : ''}`}>
       <Link to="/" className="topNav__brand" aria-label="PONSAJI home">
         <img
           className="topNav__brandMark"
@@ -46,25 +73,19 @@ export default function TopNav({ variant = 'app' }: { variant?: 'app' | 'landing
       </Link>
 
       <nav className="topNav__links" aria-label="Primary">
-        {NAV_LINKS.map((l) => {
-          const active = l.owns.some((p) => pathname === p || pathname.startsWith(`${p}/`))
-          return (
-            <Link
-              key={l.to}
-              to={l.to}
-              className={`topNav__link ${active ? 'topNav__link--active' : ''}`}
-              aria-current={active ? 'page' : undefined}
-            >
-              {l.label}
-            </Link>
-          )
-        })}
+        {NAV_LINKS.map((l) => (
+          <Link
+            key={l.to}
+            to={l.to}
+            className={`topNav__link ${isActive(l.owns) ? 'topNav__link--active' : ''}`}
+            aria-current={isActive(l.owns) ? 'page' : undefined}
+          >
+            {l.label}
+          </Link>
+        ))}
       </nav>
 
       <div className="topNav__right">
-        {/* The landing page keeps the chain badge, but the control is the same
-            one every other page carries: connecting is the action a visitor
-            takes, and "how it works" is already the button under the hero. */}
         {variant === 'landing' && (
           <span className="topNav__chain">
             <span className="topNav__chainLabel">BUILT ON</span>
@@ -80,7 +101,50 @@ export default function TopNav({ variant = 'app' }: { variant?: 'app' | 'landing
           </span>
         )}
         <WalletButton />
+
+        <button
+          ref={toggleRef}
+          type="button"
+          className="topNav__burger"
+          aria-expanded={open}
+          aria-controls="nav-drawer"
+          aria-label={open ? 'Close menu' : 'Open menu'}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className="topNav__burgerBars" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
       </div>
+
+      {/* Rendered only when open, so its links are never reachable by tab key
+          from behind a closed menu. */}
+      {open && (
+        <>
+          <button
+            type="button"
+            className="topNav__scrim"
+            aria-label="Close menu"
+            tabIndex={-1}
+            onClick={() => setOpen(false)}
+          />
+          <nav id="nav-drawer" className="topNav__drawer" aria-label="Primary">
+            {NAV_LINKS.map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className={`topNav__drawerLink ${isActive(l.owns) ? 'topNav__drawerLink--active' : ''}`}
+                aria-current={isActive(l.owns) ? 'page' : undefined}
+              >
+                {l.label}
+              </Link>
+            ))}
+            <span className="topNav__drawerFoot mono-label">{CHAIN_NAME.toUpperCase()}</span>
+          </nav>
+        </>
+      )}
     </header>
   )
 }

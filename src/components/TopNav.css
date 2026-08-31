@@ -142,103 +142,199 @@
   filter: brightness(1.08);
 }
 
+/* ---------- the menu button ---------- */
+
+/* Hidden until the drawer breakpoint: on a wide screen the links are already
+   visible, and a menu button next to them would be a second way to do one thing. */
+.topNav__burger {
+  display: none;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: transparent;
+  border: 1px solid var(--steel-border);
+  color: var(--chalk);
+  cursor: pointer;
+  transition: border-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.topNav__burger:hover {
+  border-color: var(--signal-lime);
+}
+
+.topNav__burgerBars {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 18px;
+  height: 14px;
+}
+
+.topNav__burgerBars span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: currentColor;
+  transition:
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 120ms linear;
+}
+
+/* Open state folds the bars into a cross, so the control says what it will do
+   next rather than what it did. */
+.topNav--open .topNav__burger {
+  border-color: var(--signal-lime);
+  color: var(--signal-lime);
+}
+
+.topNav--open .topNav__burgerBars span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.topNav--open .topNav__burgerBars span:nth-child(2) {
+  opacity: 0;
+}
+
+.topNav--open .topNav__burgerBars span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topNav__burgerBars span {
+    transition: none;
+  }
+}
+
+/* ---------- the drawer ---------- */
+
+.topNav__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  border: none;
+  padding: 0;
+  background: rgba(3, 4, 3, 0.72);
+  cursor: default;
+}
+
+.topNav__drawer {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 19;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-black);
+  border-top: 1px solid var(--steel-border);
+  border-bottom: 1px solid var(--steel-border);
+}
+
+.topNav__drawerLink {
+  display: flex;
+  align-items: center;
+  /* A finger, not a cursor: every row clears the 44px target on its own. */
+  min-height: 52px;
+  padding: 0 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: var(--steel-light);
+  border-bottom: 1px solid rgba(38, 42, 37, 0.7);
+}
+
+.topNav__drawerLink:last-of-type {
+  border-bottom: none;
+}
+
+.topNav__drawerLink--active {
+  color: var(--signal-lime);
+  box-shadow: inset 3px 0 0 var(--signal-lime);
+}
+
+.topNav__drawerFoot {
+  padding: 12px 20px 14px;
+  color: var(--steel);
+  border-top: 1px solid var(--steel-border);
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 1080px) {
   .topNav {
-    grid-template-columns: auto auto;
-    row-gap: 10px;
     padding: 8px 20px;
-  }
-
-  .topNav__right {
-    grid-row: 1;
-    grid-column: 2;
-  }
-
-  .topNav__links {
-    grid-row: 2;
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-    overflow-x: auto;
-    gap: 2px;
-    scrollbar-width: none;
-  }
-
-  .topNav__links::-webkit-scrollbar {
-    display: none;
+    gap: 14px;
   }
 
   .topNav__link {
-    padding: 11px 14px;
+    padding: 11px 12px;
     white-space: nowrap;
   }
 
   .topNav__chain {
     display: none;
   }
+}
+
+/*
+  The drawer breakpoint.
+
+  Five inline links plus a wallet control stop fitting well before a phone: the
+  row used to wrap and carry the wallet button off the right edge, where it was
+  unreachable. Below this width the links live in the drawer and the header
+  keeps exactly two things, the brand and the controls.
+*/
+@media (max-width: 900px) {
+  .topNav {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 0;
+  }
+
+  .topNav__links {
+    display: none;
+  }
+
+  .topNav__burger {
+    display: inline-flex;
+  }
 
   .topNav__right {
     gap: 10px;
+    justify-content: flex-end;
   }
 
-  /* Keep the entry CTA on one line — a wrapped button reads as a broken
-     control, and it must not out-weigh the brand on a small screen. */
-  .topNav__cta {
-    padding: 12px 18px;
-    font-size: 12px;
-    gap: 8px;
-    white-space: nowrap;
+  /* The landing header keeps its wallet control here. It used to be hidden
+     outright on small screens, which removed the only way in. */
+  .topNav--landing .topNav__right {
+    display: flex;
   }
 }
 
 @media (max-width: 560px) {
   .topNav {
-    column-gap: 0;
     padding-inline: 16px;
-  }
-
-  .topNav--landing {
-    grid-template-columns: minmax(0, 1fr);
+    min-height: 64px;
   }
 
   .topNav__brand {
-    gap: 7px;
+    gap: 8px;
+    min-width: 0;
   }
 
   .topNav__brandMark {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
   }
 
   .topNav__brandName {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .topNav__brandSuffix {
     display: none;
-  }
-
-  .topNav__links {
-    grid-column: 1;
-    width: calc(100vw - 32px);
-    min-width: 0;
-    gap: 0;
-  }
-
-  .topNav__link {
-    flex: 1 1 25%;
-    justify-content: center;
-    padding-inline: 8px;
-    font-size: 10px;
-  }
-
-  .topNav--landing .topNav__right {
-    display: none;
-  }
-
-  .topNav__cta {
-    padding-inline: 13px;
-    font-size: 10px;
   }
 }
