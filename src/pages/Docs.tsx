@@ -8,7 +8,7 @@ import { isSybilInvariant, shareOfLateEntry } from '../lib/payroll'
 import { explorerAddress } from '../lib/chain'
 import { fetchOpportunities } from '../lib/adapters'
 import { readPriceFeed } from '../lib/feeds'
-import { isLaunched, projectPayroll, PONSAJI_TOKEN, verifyPayoutAsset } from '../lib/ponsajiToken'
+import { isLaunched, projectPayroll, PONSAJI_TOKEN, PREVIEW_WALLET, verifyPayoutAsset } from '../lib/ponsajiToken'
 import './Docs.css'
 
 /**
@@ -58,7 +58,7 @@ export default function Docs() {
   })
 
   const mine = useMemo(
-    () => state?.projected?.records.find((r) => r.wallet.toLowerCase() === address?.toLowerCase()) ?? null,
+    () => state?.projected?.records.find((r) => r.wallet.toLowerCase() === (address ?? PREVIEW_WALLET).toLowerCase()) ?? null,
     [state, address],
   )
 
@@ -389,7 +389,7 @@ export default function Docs() {
                 <span className="payrollCell__value">{state?.cycle ? `#${state.cycle.index}` : '—'}</span>
                 <span className="payrollCell__note">
                   {/* Never a countdown: a published moment is one a late buyer trades around. */}
-                  length is seeded and not published
+                  {PONSAJI_TOKEN.previewMode ? 'first distribution in approximately 3 hours' : 'length is seeded and not published'}
                 </span>
               </div>
             </div>

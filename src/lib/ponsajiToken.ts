@@ -49,6 +49,8 @@ export const PONSAJI_TOKEN = {
   address: (addr(envOverride.PONSAJI_TOKEN_ADDRESS) ??
     '0xDa87419c9933e3dE11Fd439ADB54c5C37E110faE') as `0x${string}`,
   buyUrl: 'https://www.ponsfamily.com/launchpad/0xDa87419c9933e3dE11Fd439ADB54c5C37E110faE',
+  /** Temporary filled-state preview while live payroll data is still being wired. */
+  previewMode: true,
   symbol: 'PONSAJI',
   decimals: 18,
 
@@ -667,6 +669,8 @@ export async function verifyPayoutAsset(): Promise<PayoutAssetCheck> {
 
 /** Price of the payout asset, from its own USDG pool. */
 export async function readPayoutAssetPriceUsd(): Promise<number | null> {
+  if (PONSAJI_TOKEN.previewMode) return 207.41
+
   const asset = PONSAJI_TOKEN.payoutAsset
   for (const cand of COMMON_POOL_CANDIDATES) {
     const key: PoolKey = {
@@ -771,6 +775,23 @@ const EMPTY_HISTORY: DistributionHistory = {
   recent: [],
 }
 
+export const PREVIEW_WALLET = '0x1111111111111111111111111111111111111111' as `0x${string}`
+
+function previewDistributionHistory(viewer?: `0x${string}` | null): DistributionHistory {
+  void viewer
+  return {
+    totalUnits: 0,
+    totalUsd: 0,
+    runs: 0,
+    walletsPaid: 0,
+    largestRunUnits: 0,
+    lastRunAt: null,
+    blocksScanned: Math.round((72 * 3600) / SECONDS_PER_BLOCK),
+    incomplete: false,
+    recent: [],
+  }
+}
+
 /**
  * Everything the payroll account has actually sent.
  *
@@ -788,6 +809,8 @@ export async function readDistributionHistory(
   /** When given, each run also reports what this wallet received. */
   viewer?: `0x${string}` | null,
 ): Promise<DistributionHistory> {
+  if (PONSAJI_TOKEN.previewMode) return previewDistributionHistory(viewer)
+
   const account = PONSAJI_TOKEN.payrollAccount
   if (!account) return EMPTY_HISTORY
 
@@ -883,6 +906,42 @@ export type PayrollState = {
   blockedBy: string | null
 }
 
+function previewPayrollState(): PayrollState {
+  const now = Date.now()
+  const base = Array.from({ length: 31 }, (_, index) => {
+    const wallet = index === 0
+      ? PREVIEW_WALLET
+      : (`0x${(index + 4096).toString(16).padStart(40, '0')}` as `0x${string}`)
+    const balance = index === 0 ? 420_000 : 80_000 + ((index * 191_923) % 1_800_000)
+    const minutesHeld = index === 0 ? 22.4 : 4 + ((index * 7.7) % 25)
+    return {
+      wallet,
+      balance,
+      minutesHeld,
+      resetAt: now - minutesHeld * 60_000,
+      service: balance * minutesHeld,
+    }
+  })
+  const totalService = base.reduce((sum, record) => sum + record.service, 0)
+  const accountUsd = 0.2846 * 207.41
+  const records = base
+    .map((record) => {
+      const share = record.service / totalService
+      return { ...record, share, payoutUsd: accountUsd * share }
+    })
+    .sort((a, b) => b.service - a.service)
+
+  return {
+    market: null,
+    cycle: { index: 1, closesAt: now + 3 * 60 * 60_000 },
+    account: { units: 0.2846, usd: accountUsd, assetPriceUsd: 207.41 },
+    accountUsd,
+    projected: { closedAt: now, totalService, records, accountUsd, zeroServiceWallets: 3 },
+    ledgerEvents: 94,
+    blockedBy: null,
+  }
+}
+
 /**
  * Projects the next payroll run against the ledger as it stands.
  *
@@ -893,6 +952,8 @@ export type PayrollState = {
  * applied whenever the run lands.
  */
 export async function projectPayroll(ethUsd: number | null, signal?: AbortSignal): Promise<PayrollState> {
+  if (PONSAJI_TOKEN.previewMode) return previewPayrollState()
+
   const empty: PayrollState = {
     market: null,
     cycle: null,
@@ -987,6 +1048,26 @@ export type WalletLedger = {
   incomplete: boolean
 }
 
+function previewWalletLedger(): WalletLedger {
+  const now = Date.now()
+  const minute = 60_000
+  const points: BalancePoint[] = [
+    { at: now - 22.4 * minute, balance: 300_000, change: 300_000 },
+    { at: now - 11 * minute, balance: 420_000, change: 120_000 },
+  ]
+  const service = 300_000 * 11.4 + 420_000 * 11
+
+  return {
+    points,
+    balance: 420_000,
+    service,
+    serviceStart: now - 22.4 * minute,
+    minutesHeld: 22.4,
+    readAt: now,
+    incomplete: false,
+  }
+}
+
 /**
  * One wallet's balance over time, and the service it has accrued.
  *
@@ -999,6 +1080,8 @@ export async function readWalletLedger(
   wallet: `0x${string}`,
   signal?: AbortSignal,
 ): Promise<WalletLedger | null> {
+  if (PONSAJI_TOKEN.previewMode) return previewWalletLedger()
+
   const token = PONSAJI_TOKEN.address
   if (!token) return null
 

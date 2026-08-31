@@ -11,6 +11,7 @@ import {
   projectPayroll,
   readDistributionHistory,
   readWalletLedger,
+  PREVIEW_WALLET,
   type BalancePoint,
 } from '../lib/ponsajiToken'
 import './Payout.css'
@@ -242,6 +243,8 @@ function Curve({ points, readAt, example }: { points: BalancePoint[]; readAt: nu
 export default function Payout() {
   const { address, isConnected } = useWalletGate()
   const launched = isLaunched()
+  const viewer = address ?? PREVIEW_WALLET
+  const viewerActive = isConnected || PONSAJI_TOKEN.previewMode
 
   const { data: state } = useQuery({
     queryKey: ['payroll'],
@@ -254,15 +257,15 @@ export default function Payout() {
   })
 
   const { data: history } = useQuery({
-    queryKey: ['distribution-history', address ?? null],
-    queryFn: ({ signal }) => readDistributionHistory(72, signal, address ?? null),
+    queryKey: ['distribution-history', viewer],
+    queryFn: ({ signal }) => readDistributionHistory(72, signal, viewer),
     staleTime: 60_000,
   })
 
   const { data: ledger, isPending: ledgerPending } = useQuery({
-    queryKey: ['wallet-ledger', address],
-    queryFn: ({ signal }) => readWalletLedger(address as `0x${string}`, signal),
-    enabled: Boolean(address) && launched,
+    queryKey: ['wallet-ledger', viewer],
+    queryFn: ({ signal }) => readWalletLedger(viewer, signal),
+    enabled: viewerActive && launched,
     staleTime: 30_000,
   })
 
@@ -295,7 +298,9 @@ export default function Payout() {
           </span>
           <span className="cycleStrip__note">
             {state?.cycle
-              ? 'The closing moment is seeded and never published.'
+              ? PONSAJI_TOKEN.previewMode
+                ? 'First distribution in approximately 3 hours.'
+                : 'The closing moment is seeded and never published.'
               : 'Cycles begin at the launch instant, read from the pool itself.'}
           </span>
         </div>
@@ -309,7 +314,7 @@ export default function Payout() {
                 <span className="payoutHead__value payoutHead__value--muted">NOT DEPLOYED</span>
                 <span className="payoutHead__sub">There is no ledger to accrue against yet.</span>
               </>
-            ) : !isConnected ? (
+            ) : !viewerActive ? (
               <>
                 <span className="payoutHead__value payoutHead__value--muted">NO WALLET</span>
                 <span className="payoutHead__sub">Connect a wallet to read its service from the chain.</span>
@@ -387,7 +392,7 @@ export default function Payout() {
             </h1>
             {!hasCurve && (
               <span className="payoutChart__flag mono-label">
-                {launched && isConnected ? 'NO TRANSFERS FOR THIS WALLET' : 'WORKED EXAMPLE'}
+                {launched && viewerActive ? 'NO TRANSFERS FOR THIS WALLET' : 'WORKED EXAMPLE'}
               </span>
             )}
           </div>
@@ -487,7 +492,7 @@ export default function Payout() {
                 ))}
               </div>
             )}
-            {runs.length > 0 && !isConnected && (
+            {runs.length > 0 && !viewerActive && (
               <p className="runsBox__hint">Connect a wallet to see what it received in each run.</p>
             )}
           </section>

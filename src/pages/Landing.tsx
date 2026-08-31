@@ -15,6 +15,7 @@ import {
   readDistributionHistory,
   readPayoutAssetPriceUsd,
   PONSAJI_TOKEN,
+  PREVIEW_WALLET,
 } from '../lib/ponsajiToken'
 import './Landing.css'
 
@@ -74,7 +75,7 @@ export default function Landing() {
   })
 
   const mine = useMemo(
-    () => state?.projected?.records.find((r) => r.wallet.toLowerCase() === address?.toLowerCase()) ?? null,
+    () => state?.projected?.records.find((r) => r.wallet.toLowerCase() === (address ?? PREVIEW_WALLET).toLowerCase()) ?? null,
     [state, address],
   )
 
@@ -161,7 +162,9 @@ export default function Landing() {
                   </div>
                   <div>
                     <span className="mono-label">CYCLE</span>
-                    <span className="board__cell">{state?.cycle ? `#${state.cycle.index}` : '—'}</span>
+                    <span className="board__cell">
+                      {state?.cycle ? `#${state.cycle.index}${PONSAJI_TOKEN.previewMode ? ' · ~3H' : ''}` : '—'}
+                    </span>
                   </div>
                   <div>
                     <span className="mono-label">PAID IN</span>
